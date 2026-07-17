@@ -80,7 +80,7 @@ export function ProductSlider({ products = [], label = "Featured", heading = "To
                   >
                     <div className="relative aspect-square rounded-lg overflow-hidden bg-neutral-100 mb-1 md:mb-2">
                       <img
-                        src={product.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80"}
+                        src={product.image || ""}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />

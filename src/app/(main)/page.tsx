@@ -74,7 +74,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 async function getHomeSections(): Promise<HomeSection[]> {
   try {
     const res = await fetch(`${API_URL}/api/home-sections`, {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
     if (!res.ok) return [];
     return res.json();
@@ -113,7 +113,7 @@ async function filterHeroSlides(sections: HomeSection[]): Promise<HeroSlide[]> {
 async function getProducts(): Promise<Product[]> {
   try {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const res = await fetch(`${API_URL}/api/products?limit=12&is_active=true`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}/api/products?limit=12&is_active=true`, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const data = await res.json();
     return data.products || data || [];
@@ -184,46 +184,7 @@ async function HomeSectionsAsync() {
       <div className="mb-10">
         {promoBannerSection ? (
           <DynamicSection section={promoBannerSection} />
-        ) : (
-          <section>
-            <div className="max-w-[1600px] mx-auto px-4 md:px-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-3 lg:gap-4">
-                <Link href="/summer-collection" className="block relative overflow-hidden rounded-xl aspect-[3/2] group">
-                  <img
-                    src="https://images.unsplash.com/photo-1490481651871-ab68de25d43c?w=800&q=80"
-                    alt="Summer Collection"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent flex items-center">
-                    <div className="p-8 md:p-12">
-                      <p className="text-white/80 text-xs uppercase tracking-wider mb-2">New Arrivals</p>
-                      <h3 className="text-white text-2xl md:text-4xl font-light mb-4">Summer<br/>Collection</h3>
-                      <span className="inline-block text-white text-sm border border-white/40 px-5 py-2.5 rounded-full group-hover:bg-white group-hover:text-black transition-colors">
-                        Shop Now
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-                <Link href="/accessories" className="block relative overflow-hidden rounded-xl aspect-[3/2] group">
-                  <img
-                    src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=800&q=80"
-                    alt="Accessories"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent flex items-center">
-                    <div className="p-8 md:p-12">
-                      <p className="text-white/80 text-xs uppercase tracking-wider mb-2">Complete Your Look</p>
-                      <h3 className="text-white text-2xl md:text-4xl font-light mb-4">Style<br/>Essentials</h3>
-                      <span className="inline-block text-white text-sm border border-white/40 px-5 py-2.5 rounded-full group-hover:bg-white group-hover:text-black transition-colors">
-                        Shop Now
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
+        ) : null}
       </div>
 
       <div className="mb-10">
@@ -233,8 +194,7 @@ async function HomeSectionsAsync() {
         />
       </div>
 
-      <div className="mb-10">
-        {fullWidthBannerSection ? (
+      {fullWidthBannerSection ? (
           <section className="relative h-[50vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
             <Link
               href={fullWidthBannerSection.items?.[0]?.link || "#"}
@@ -242,7 +202,7 @@ async function HomeSectionsAsync() {
             >
               <div
                 className="absolute inset-0 bg-cover bg-center bg-fixed"
-                style={{ backgroundImage: `url(${fullWidthBannerSection.items?.[0]?.image || "https://images.unsplash.com/photo-1445205176230-a4d268678d6f?w=1600&q=80"})` }}
+                style={{ backgroundImage: `url(${fullWidthBannerSection.items?.[0]?.image})` }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 md:pb-12 text-center px-4">
@@ -263,28 +223,7 @@ async function HomeSectionsAsync() {
               </div>
             </Link>
           </section>
-        ) : (
-          <section className="relative h-[50vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
-            <Link href="/new-collection" className="block relative w-full h-full group">
-              <div
-                className="absolute inset-0 bg-cover bg-center bg-fixed"
-                style={{ backgroundImage: "url(https://images.unsplash.com/photo-1445205176230-a4d268678d6f?w=1600&q=80)" }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 md:pb-12 text-center px-4">
-                <h2 className="text-white text-xl md:text-3xl lg:text-4xl font-light mb-2">
-                  Discover the New Collection
-                </h2>
-                <p className="text-white/80 text-sm md:text-base mb-4 max-w-lg">
-                  Explore the latest trends and elevate your style
-                </p>
-                <span className="text-white text-sm md:text-base underline underline-offset-4 decoration-white/60 group-hover:decoration-white transition-colors">
-                  Shop Now
-                </span>
-              </div>
-            </Link>
-          </section>
-        )}
+        ) : null}
       </div>
 
       <div className="mb-10">

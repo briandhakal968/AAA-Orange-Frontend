@@ -15,45 +15,17 @@ interface HeroSlide {
   link: string | null;
 }
 
-const defaultSlides: HeroSlide[] = [
-  {
-    id: 1,
-    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1920&q=80",
-    title: null,
-    description: null,
-    link: null,
-  },
-  {
-    id: 2,
-    image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1920&q=80",
-    title: null,
-    description: null,
-    link: null,
-  },
-  {
-    id: 3,
-    image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=1920&q=80",
-    title: null,
-    description: null,
-    link: null,
-  },
-];
-
-function getBaseUrl() {
-  if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  }
-  return "http://localhost:8000";
-}
+const defaultSlides: HeroSlide[] = [];
 
 async function fetchHeroSlides(): Promise<HeroSlide[]> {
   try {
-    const response = await fetch(`${getBaseUrl()}/api/home-sections?key=hero`);
-    if (!response.ok) return defaultSlides;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.aaaorange.com";
+    const response = await fetch(`${API_URL}/api/home-sections?key=hero`);
+    if (!response.ok) return [];
     const sections = await response.json();
     const heroSection = sections.find((s: { section_key: string }) => s.section_key === "hero");
-    if (!heroSection?.items || heroSection.items.length === 0) return defaultSlides;
-    const validSlides = heroSection.items
+    if (!heroSection?.items || heroSection.items.length === 0) return [];
+    return heroSection.items
       .filter((item: HeroSlide) => item.image && (item.image.startsWith('http://') || item.image.startsWith('https://')))
       .map((item: HeroSlide) => ({
         id: item.id,
@@ -62,9 +34,8 @@ async function fetchHeroSlides(): Promise<HeroSlide[]> {
         description: item.description,
         link: item.link,
       }));
-    return validSlides.length > 0 ? validSlides : defaultSlides;
   } catch {
-    return defaultSlides;
+    return [];
   }
 }
 
@@ -107,6 +78,10 @@ export function HeroSlider({ slides: serverSlides }: HeroSliderProps = {}) {
         </div>
       </section>
     );
+  }
+
+  if (!slides || slides.length === 0) {
+    return null;
   }
 
   return (

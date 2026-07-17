@@ -163,7 +163,7 @@ function FeaturedProductsSection({ section }: { section: HomeSection }) {
                   <Link href={`/products/${product.slug}`} className="group block">
                      <div className="relative aspect-square rounded-lg overflow-hidden bg-neutral-100 mb-1 md:mb-2">
                       <img
-                        src={product.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80"}
+                        src={product.image || ""}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
@@ -234,7 +234,7 @@ function BannerSection({ section }: { section: HomeSection }) {
             >
               <div className="relative" style={{ aspectRatio }}>
                 <img
-                  src={item.image || "https://images.unsplash.com/photo-1490481651871-ab68de25d43c?w=800&q=80"}
+                  src={item.image || ""}
                   alt={item.title || "Banner"}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -278,7 +278,7 @@ function BannerSection({ section }: { section: HomeSection }) {
 function HeroBannerSection({ section }: { section: HomeSection }) {
   const items = section.items || [];
   const item = items[0];
-  const imageUrl = section.background_image || item?.image || "https://images.unsplash.com/photo-1445205176230-a4d268678d6f?w=1600&q=80";
+  const imageUrl = section.background_image || item?.image || "";
   const linkUrl = section.link || item?.link || "/shop";
 
   return (
@@ -325,7 +325,7 @@ function VerticalBannerSection({ section }: { section: HomeSection }) {
               className="block relative aspect-square md:min-h-[100vh] group overflow-hidden rounded-xl"
             >
               <img
-                src={item.image || "https://images.unsplash.com/photo-1469334031218-e382a10b9302?w=800&q=80"}
+                src={item.image || ""}
                 alt={item.title || "Banner"}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -462,7 +462,7 @@ function CategorySection({ section }: { section: HomeSection }) {
               <Link href={item.link || `/category/${item.description}`} className="group block">
                  <div className="relative aspect-square rounded-lg md:rounded-xl overflow-hidden bg-neutral-100 mb-1 md:mb-2">
                   <img
-                    src={item.image || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&q=80"}
+                    src={item.image || ""}
                     alt={item.title || "Category"}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />

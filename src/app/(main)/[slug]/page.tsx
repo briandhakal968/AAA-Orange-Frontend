@@ -1,10 +1,8 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { use } from "react";
+import { Metadata } from "next";
 import Link from "next/link";
-import { Container } from "@/components/ui/container";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.aaaorange.com";
 
 interface PageData {
   id: number;
@@ -21,46 +19,37 @@ interface PageData {
   updated_at: string;
 }
 
-export default function PublicPage({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = use(params);
-  const [page, setPage] = useState<PageData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPage = async () => {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${API_URL}/api/pages/${resolvedParams.slug}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPage(data);
-        } else {
-          setPage(null);
-        }
-      } catch (error) {
-        console.error("Error fetching page:", error);
-        setPage(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPage();
-  }, [resolvedParams.slug]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+async function getPage(slug: string): Promise<PageData | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/pages/${slug}`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
   }
+}
+
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
+  const page = await getPage(params.slug);
+  if (!page) return { title: "Page Not Found" };
+  return {
+    title: page.seo_title || `${page.title} | AAA Orange`,
+    description: page.seo_description || "",
+  };
+}
+
+export default async function PublicPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const page = await getPage(resolvedParams.slug);
 
   if (!page) {
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center">
-        <h1 className="text-3xl font-bold text-slate-800 mb-4">Page Not Found</h1>
-        <p className="text-slate-500">The page you&apos;re looking for doesn&apos;t exist.</p>
+      <div className="flex-1">
+        <div className="max-w-4xl mx-auto py-20 text-center">
+          <h1 className="text-3xl font-bold text-slate-800 mb-4">Page Not Found</h1>
+          <p className="text-slate-500">The page you&apos;re looking for doesn&apos;t exist.</p>
+        </div>
       </div>
     );
   }
@@ -69,7 +58,6 @@ export default function PublicPage({ params }: { params: Promise<{ slug: string 
 
   return (
     <div className="flex-1">
-      {/* Banner */}
       <div
         className="relative flex items-center justify-center"
         style={{ height: "300px" }}
@@ -91,7 +79,6 @@ export default function PublicPage({ params }: { params: Promise<{ slug: string 
         </h1>
       </div>
 
-      {/* Breadcrumb + Content */}
       <div className="max-w-6xl mx-auto px-4">
         {page.use_breadcrumb && (
           <nav className="flex items-center gap-2 text-sm text-slate-500 py-3 border-b border-slate-200">

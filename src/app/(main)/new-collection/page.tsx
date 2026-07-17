@@ -1,19 +1,27 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/ui/product-card";
-import { useProducts } from "@/hooks/useProducts";
 
-export default function NewCollectionPage() {
-  const [loading, setLoading] = useState(true);
-  const { products } = useProducts();
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.aaaorange.com";
 
-  useEffect(() => {
-    if (products.length > 0) {
-      setLoading(false);
-    }
-  }, [products]);
+export const metadata: Metadata = {
+  title: "New Collection | AAA Orange",
+  description: "Check out our latest arrivals",
+};
+
+async function getNewProducts() {
+  try {
+    const res = await fetch(`${API_URL}/api/products?limit=12&is_active=true&sort=newest`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.products || data || [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function NewCollectionPage() {
+  const products = await getNewProducts();
 
   return (
     <Container>
@@ -23,17 +31,11 @@ export default function NewCollectionPage() {
           <p className="text-sm text-gray-500 mt-2">Check out our latest arrivals</p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6">
-            {products.slice(0, 12).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6">
+          {products.map((product: any) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       </div>
     </Container>
   );

@@ -223,7 +223,7 @@ attributes: Object.entries(selectedAttributes).flatMap(([attrId, values]) =>
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/admin/products/' + productSlug, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.aaaorange.com'}/api/admin/products/${productSlug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(productData)

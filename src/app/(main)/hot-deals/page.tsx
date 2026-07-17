@@ -1,34 +1,26 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { ProductCard } from "@/components/ui/product-card";
-import type { Product } from "@/lib/products";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.aaaorange.com";
 
-export default function HotDealsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+export const metadata: Metadata = {
+  title: "Hot Deals | AAA Orange",
+  description: "Hot deals with amazing discounts",
+};
 
-  useEffect(() => {
-    const fetchDeals = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/hot-deals`);
-        if (!res.ok) throw new Error("Failed to fetch hot deals");
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        console.error("Error fetching hot deals:", err);
-        setError("Failed to load Hot Deals.");
-      } finally {
-        setLoading(false);
-      }
-    };
+async function getHotDeals() {
+  try {
+    const res = await fetch(`${API_URL}/api/hot-deals`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
 
-    fetchDeals();
-  }, []);
+export default async function HotDealsPage() {
+  const products = await getHotDeals();
 
   return (
     <Container>
@@ -38,21 +30,13 @@ export default function HotDealsPage() {
           <p className="text-sm text-gray-500 mt-2">Hot deals with amazing discounts</p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
-            <p className="text-red-500">{error}</p>
-          </div>
-        ) : products.length === 0 ? (
+        {products.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-500">No hot deals available right now. Check back later!</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-6">
-            {products.map((product) => (
+            {products.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

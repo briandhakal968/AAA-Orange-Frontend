@@ -91,16 +91,16 @@ export interface ProductVariant {
   updated_at?: string;
 }
 
-const API_BASE = '';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.aaaorange.com';
 
 export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_BASE}/api/products`);
+  const res = await fetch(`${API_BASE}/api/products`, { next: { revalidate: 60 } });
   if (!res.ok) throw new Error('Failed to fetch products');
   return res.json();
 }
 
 export async function getProduct(slug: string): Promise<Product> {
-  const res = await fetch(`${API_BASE}/api/products/${slug}`);
+  const res = await fetch(`${API_BASE}/api/products/${slug}`, { next: { revalidate: 60 } });
   if (!res.ok) throw new Error('Failed to fetch product');
   return res.json();
 }

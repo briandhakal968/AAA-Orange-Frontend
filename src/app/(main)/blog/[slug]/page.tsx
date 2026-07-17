@@ -1,10 +1,9 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { use } from "react";
+import { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.aaaorange.com";
 
 interface Post {
   id: number;
@@ -40,68 +39,60 @@ interface Category {
   posts_count: number;
 }
 
-export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = use(params);
-  const [post, setPost] = useState<Post | null>(null);
-  const [related, setRelated] = useState<RelatedPost[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [latestPosts, setLatestPosts] = useState<RelatedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/blog/${resolvedParams.slug}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPost(data.post);
-          setRelated(data.related || []);
-        }
-      } catch (error) {
-        console.error("Error fetching post:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/blog-categories`);
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-
-    const fetchLatest = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/api/blog/recent?limit=5`);
-        if (res.ok) {
-          const data = await res.json();
-          setLatestPosts(data.posts || []);
-        }
-      } catch (error) {
-        console.error("Error fetching latest posts:", error);
-      }
-    };
-
-    fetchPost();
-    fetchCategories();
-    fetchLatest();
-  }, [resolvedParams.slug]);
-
-  if (loading) {
-    return (
-      <main className="flex-1">
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </main>
-    );
+async function getPost(slug: string): Promise<{ post: Post | null; related: RelatedPost[] }> {
+  try {
+    const res = await fetch(`${API_URL}/api/blog/${slug}`, { next: { revalidate: 60 } });
+    if (!res.ok) return { post: null, related: [] };
+    const data = await res.json();
+    return { post: data.post, related: data.related || [] };
+  } catch {
+    return { post: null, related: [] };
   }
+}
+
+async function getCategories(): Promise<Category[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/blog-categories`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function getLatestPosts(): Promise<RelatedPost[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/blog/recent?limit=5`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.posts || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
+  const { post } = await getPost(params.slug);
+  if (!post) return { title: "Post Not Found" };
+  return {
+    title: post.seo_title || `${post.title} | AAA Orange Blog`,
+    description: post.seo_description || post.excerpt || "",
+    openGraph: {
+      title: post.title,
+      description: post.excerpt || "",
+      images: post.featured_image ? [{ url: post.featured_image }] : [],
+    },
+  };
+}
+
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params;
+  const [{ post, related }, categories, latestPosts] = await Promise.all([
+    getPost(resolvedParams.slug),
+    getCategories(),
+    getLatestPosts(),
+  ]);
 
   if (!post) {
     return (
@@ -120,7 +111,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
 
   return (
     <main className="flex-1">
-      {/* Hero */}
       <section className="bg-gradient-to-br from-[var(--primary)] to-[var(--primary)]/80 text-white py-10 md:py-14">
         <Container>
           <div className="text-center max-w-3xl mx-auto">
@@ -142,9 +132,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       <Container>
         <div className="pt-8 md:pt-12">
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
-            {/* Content */}
             <article className="lg:col-span-8 lg:border-r lg:border-neutral-200 lg:pr-12">
-              {/* Featured Image */}
               {post.featured_image && (
                 <div className="aspect-[16/10] rounded-xl overflow-hidden mb-6">
                   <img
@@ -155,7 +143,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 </div>
               )}
 
-              {/* Meta */}
               <div className="flex flex-wrap items-center gap-4 mb-8 text-sm text-neutral-500">
                 {post.published_at && (
                   <span>
@@ -178,9 +165,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
               <RichTextContent html={post.content} />
             </article>
 
-            {/* Sidebar */}
             <aside className="lg:col-span-4 space-y-8">
-              {/* Latest Posts */}
               {latestPosts.length > 0 && (
                 <div className="bg-neutral-100 border border-neutral-200 rounded-xl p-6">
                   <h3 className="text-sm font-medium text-black mb-4">Latest Posts</h3>
@@ -200,6 +185,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                                   src={lp.featured_image}
                                   alt={lp.title}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  loading="lazy"
                                 />
                               </div>
                             )}
@@ -224,7 +210,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 </div>
               )}
 
-              {/* Categories */}
               <div className="bg-neutral-100 border border-neutral-200 rounded-xl p-6">
                 <h3 className="text-sm font-medium text-black mb-4">Categories</h3>
                 <ul className="space-y-2">
@@ -253,11 +238,9 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                   ))}
                 </ul>
               </div>
-
             </aside>
           </div>
 
-          {/* Related Posts */}
           {related.length > 0 && (
             <div className="mt-16 pt-12 border-t border-neutral-100">
               <h2 className="text-2xl font-light tracking-tight mb-8">Related Articles</h2>
@@ -274,6 +257,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                           src={r.featured_image}
                           alt={r.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
                         />
                       </div>
                     )}

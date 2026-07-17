@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.aaaorange.com';
 
 export interface ApiError {
   message: string;
@@ -33,15 +33,9 @@ class ApiClient {
 
   async get<T>(endpoint: string): Promise<T> {
     const url = `${this.baseUrl}/api${endpoint}`;
-    const headers = this.getHeaders();
-    const token = localStorage.getItem('auth_token');
-    console.log('API GET:', url);
-    console.log('Token from localStorage:', token ? token.substring(0, 20) + '...' : 'null');
-    const headersRecord = headers as Record<string, string>;
-    console.log('Authorization header:', headersRecord['Authorization']?.substring(0, 20) + '...');
     const response = await fetch(url, {
       method: 'GET',
-      headers: headers,
+      headers: this.getHeaders(),
       credentials: 'include',
     });
 

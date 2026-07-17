@@ -1,0 +1,45 @@
+/* Dynamic Typography Styles for TipTap Editor */
+/* These styles are applied by reading from the API */
+
+/* Default values - will be overridden by JavaScript */
+.tiptap-editor h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.tiptap-editor h2 {
+  font-size: 24px;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.tiptap-editor h3 {
+  font-size: 20px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.tiptap-editor h4 {
+  font-size: 18px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.tiptap-editor h5 {
+  font-size: 16px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.tiptap-editor h6 {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.tiptap-editor p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}

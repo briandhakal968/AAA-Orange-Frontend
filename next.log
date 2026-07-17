@@ -1,0 +1,155 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/briandhakal/Ecom/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/briandhakal/Ecom/frontend/package-lock.json
+
+   ▲ Next.js 15.5.15
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.18.103:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1130ms
+ ○ Compiling / ...
+ ✓ Compiled / in 774ms (1596 modules)
+ GET / 200 in 1225ms
+ ✓ Compiled in 150ms (720 modules)
+ ✓ Compiled in 137ms (720 modules)
+ ✓ Compiled in 100ms (720 modules)
+ ✓ Compiled in 124ms (720 modules)
+ ✓ Compiled in 92ms (720 modules)
+ ✓ Compiled /superadmin/home-sections in 376ms (1120 modules)
+ GET /superadmin/home-sections 200 in 548ms
+ ✓ Compiled /favicon.ico in 82ms (425 modules)
+ GET /favicon.ico 200 in 200ms
+ ✓ Compiled in 274ms (1151 modules)
+ GET /superadmin/home-sections 200 in 56ms
+ ✓ Compiled /api/revalidate in 154ms (1151 modules)
+ POST /api/revalidate 200 in 217ms
+ GET /superadmin/home-sections 200 in 144ms
+ GET /favicon.ico 200 in 11ms
+ POST /api/revalidate 200 in 11ms
+ POST /api/revalidate 200 in 9ms
+ POST /api/revalidate 200 in 9ms
+ POST /api/revalidate 200 in 9ms
+ POST /api/revalidate 200 in 8ms
+ GET /superadmin/home-sections 200 in 60ms
+ GET /favicon.ico 200 in 11ms
+ POST /api/revalidate 200 in 12ms
+ ✓ Compiled / in 345ms (919 modules)
+ GET /?country=nepal 200 in 800ms
+ GET /favicon.ico 200 in 41ms
+ ✓ Compiled /api/products in 346ms (1634 modules)
+ GET /api/products 200 in 505ms
+ GET /api/products 200 in 136ms
+ GET /?country=nepal 200 in 370ms
+ GET /favicon.ico 200 in 20ms
+ GET /api/products 200 in 173ms
+ GET /api/products 200 in 118ms
+ POST /api/revalidate 200 in 18ms
+ GET /?country=nepal 200 in 340ms
+ GET /favicon.ico 200 in 26ms
+ GET /api/products 200 in 165ms
+ GET /api/products 200 in 142ms
+ POST /api/revalidate 200 in 11ms
+ GET /?country=nepal 200 in 286ms
+ GET /favicon.ico 200 in 13ms
+ GET /api/products 200 in 175ms
+ GET /api/products 200 in 129ms
+ POST /api/revalidate 200 in 7ms
+ GET /?country=nepal 200 in 279ms
+ GET /favicon.ico 200 in 14ms
+ GET /api/products 200 in 149ms
+ GET /api/products 200 in 127ms
+ POST /api/revalidate 200 in 9ms
+ ✓ Compiled in 209ms (1648 modules)
+ GET /superadmin/home-sections 200 in 72ms
+ GET /?country=nepal 200 in 73ms
+ ✓ Compiled in 216ms (1648 modules)
+ GET /superadmin/home-sections 200 in 62ms
+ GET /?country=nepal 200 in 62ms
+ GET /superadmin/home-sections 200 in 90ms
+ GET /favicon.ico 200 in 21ms
+ POST /api/revalidate 200 in 20ms
+ GET /?country=nepal 200 in 476ms
+ GET /favicon.ico 200 in 17ms
+ GET /api/products 200 in 208ms
+ GET /api/products 200 in 132ms
+ ✓ Compiled /blog/[slug] in 251ms (1645 modules)
+ GET /blog/street-style-fashion-week-inspiration?country=nepal 200 in 736ms
+ GET /favicon.ico 200 in 18ms
+ GET /api/products 200 in 157ms
+ ✓ Compiled in 306ms (1620 modules)
+ GET /superadmin/home-sections 200 in 113ms
+ GET /?country=nepal 200 in 115ms
+ ✓ Compiled in 214ms (1620 modules)
+ GET /superadmin/home-sections 200 in 95ms
+ GET /?country=nepal 200 in 95ms
+ ✓ Compiled in 326ms (1620 modules)
+ GET /superadmin/home-sections 200 in 89ms
+ GET /?country=nepal 200 in 90ms
+ ✓ Compiled in 168ms (1620 modules)
+ GET /superadmin/home-sections 200 in 67ms
+ GET /?country=nepal 200 in 74ms
+ ✓ Compiled in 251ms (1620 modules)
+ GET /superadmin/home-sections 200 in 65ms
+ GET /?country=nepal 200 in 65ms
+ ✓ Compiled in 172ms (1620 modules)
+ GET /superadmin/home-sections 200 in 87ms
+ GET /?country=nepal 200 in 88ms
+ ✓ Compiled in 267ms (1620 modules)
+ GET /superadmin/home-sections 200 in 64ms
+ GET /?country=nepal 200 in 65ms
+ ✓ Compiled in 199ms (1620 modules)
+ GET /superadmin/home-sections 200 in 55ms
+ GET /?country=nepal 200 in 55ms
+ ✓ Compiled in 235ms (1620 modules)
+ GET /superadmin/home-sections 200 in 59ms
+ GET /?country=nepal 200 in 59ms
+ ✓ Compiled /api/products in 127ms (908 modules)
+ GET /api/products 200 in 253ms
+ GET /api/products 200 in 64ms
+ ⨯ Error: Cannot find module './1331.js'
+Require stack:
+- /Users/briandhakal/Ecom/frontend/.next/server/webpack-runtime.js
+- /Users/briandhakal/Ecom/frontend/.next/server/app/api/products/route.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/server/require.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/server/load-components.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/build/utils.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/build/swc/options.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/build/swc/index.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/build/next-config-ts/transpile-config.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/server/config.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/server/next.js
+- /Users/briandhakal/Ecom/frontend/node_modules/next/dist/server/lib/start-server.js
+    at <unknown> (.next/server/app/(main)/page.js:2:21917)
+    at Object.<anonymous> (.next/server/app/(main)/page.js:2:21989) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 735ms (1952 modules)
+ GET /superadmin/home-sections 200 in 403ms
+ GET /?country=nepal 200 in 402ms
+ GET /superadmin/home-sections 200 in 26ms
+ GET /?country=nepal 200 in 28ms
+ GET /?country=nepal 500 in 1173ms
+ ✓ Compiled /favicon.ico in 164ms (1100 modules)
+ GET /favicon.ico 200 in 234ms
+ GET /?country=nepal 200 in 346ms
+ GET /favicon.ico 200 in 14ms
+ GET /?country=nepal 200 in 252ms
+ GET /favicon.ico 200 in 15ms
+ GET /?country=nepal 200 in 239ms
+ GET /favicon.ico 200 in 21ms
+ GET / 200 in 226ms
+ GET / 200 in 217ms
+ GET /?country=nepal 200 in 250ms
+ GET /favicon.ico 200 in 15ms
+ GET /?country=nepal 200 in 277ms
+ GET /favicon.ico 200 in 20ms
+ GET / 200 in 220ms
+[?25h

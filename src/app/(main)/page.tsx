@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { HeroSlider } from "@/components/layout/hero-slider";
 import { CategorySlider } from "@/components/sections/category-slider";
@@ -121,17 +122,28 @@ async function getProducts(): Promise<Product[]> {
   }
 }
 
-export default async function Home() {
+function HeroSection() {
+  return (
+    <Suspense fallback={<div className="relative h-[18vh] md:h-[50vh] lg:h-[60vh] w-full bg-neutral-100 animate-pulse" />}>
+      <HeroSliderAsync />
+    </Suspense>
+  );
+}
+
+async function HeroSliderAsync() {
+  const sections = await getHomeSections();
+  const heroSlides = await filterHeroSlides(sections);
+  return <HeroSlider slides={heroSlides} />;
+}
+
+async function HomeSectionsAsync() {
   const [sections, categories, products] = await Promise.all([
     getHomeSections(),
     getCategories(),
     getProducts(),
   ]);
 
-  const heroSlides = await filterHeroSlides(sections);
   const categorySection = sections.find(s => s.section_key === "category") as unknown as CategorySection | undefined;
-  
-  // Banner sections managed from admin
   const promoBannerSection = sections.find(s => (s.section_key === "banner" || s.section_key === "promo_banner") && s.is_active);
   const fullWidthBannerSection = sections.find(s => s.section_key === "full_width_banner" && s.is_active);
   const productGridSection = sections.find(s => s.section_key === "product_grid" && s.is_active);
@@ -147,24 +159,8 @@ export default async function Home() {
 
   const secondProductGridSection = sections.find(s => s.section_key === "second_product_grid" && s.is_active);
 
-  const otherSections = sections.filter(s =>
-    s.section_key !== "hero" &&
-    s.section_key !== "banner" &&
-    s.section_key !== "promo_banner" &&
-    s.section_key !== "full_width_banner" &&
-    s.section_key !== "product_grid" &&
-    s.section_key !== "product_slider" &&
-    s.section_key !== "second_product_slider" &&
-    s.section_key !== "second_product_grid" &&
-    s.is_active
-  ).sort((a, b) => a.position - b.position);
-
   return (
-    <main className="flex-1">
-      <div className="mb-10">
-        <HeroSlider slides={await heroSlides} />
-      </div>
-
+    <>
       <div className="mb-10">
         <CategorySlider
           categories={categories}
@@ -239,7 +235,7 @@ export default async function Home() {
 
       <div className="mb-10">
         {fullWidthBannerSection ? (
-          <section className="relative h-screen w-full overflow-hidden">
+          <section className="relative h-[50vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
             <Link
               href={fullWidthBannerSection.items?.[0]?.link || "#"}
               className="block relative w-full h-full group"
@@ -268,7 +264,7 @@ export default async function Home() {
             </Link>
           </section>
         ) : (
-          <section className="relative h-screen w-full overflow-hidden">
+          <section className="relative h-[50vh] md:h-[60vh] lg:h-[60vh] w-full overflow-hidden">
             <Link href="/new-collection" className="block relative w-full h-full group">
               <div
                 className="absolute inset-0 bg-cover bg-center bg-fixed"
@@ -310,7 +306,20 @@ export default async function Home() {
           );
         })()}
       </div>
+    </>
+  );
+}
 
+export default async function Home() {
+  return (
+    <main className="flex-1">
+      <div className="mb-10">
+        <HeroSection />
+      </div>
+
+      <Suspense fallback={<div className="max-w-[1600px] mx-auto px-4 md:px-6"><div className="h-10 bg-neutral-100 rounded animate-pulse mb-4" /><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square bg-neutral-100 rounded-lg animate-pulse"/>)}</div></div>}>
+        <HomeSectionsAsync />
+      </Suspense>
     </main>
   );
 }

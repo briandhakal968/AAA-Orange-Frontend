@@ -224,7 +224,6 @@ async function HomeSectionsAsync() {
             </Link>
           </section>
         ) : null}
-      </div>
 
       <div className="mb-10">
         <ProductSlider

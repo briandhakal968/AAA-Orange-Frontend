@@ -92,8 +92,8 @@ function CheckoutContent() {
     return 0;
   }, [shippingMethod, subtotal]);
 
-  const tax = useMemo(() => subtotal * 0.08, [subtotal]);
-  const total = useMemo(() => subtotal + shipping + tax, [subtotal, shipping, tax]);
+  const tax = 0;
+  const total = useMemo(() => subtotal + shipping, [subtotal, shipping]);
 
   useEffect(() => {
     setMounted(true);
@@ -379,10 +379,7 @@ function CheckoutContent() {
                   <span className="text-neutral-600">Shipping</span>
                   <span>{Number(orderDetails.shipping_cost) === 0 ? "Free" : `${currencySymbol}{Number(orderDetails.shipping_cost).toFixed(2)}`}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-neutral-600">Tax (8%)</span>
-                  <span>{currencySymbol}{Number(orderDetails.tax).toFixed(2)}</span>
-                </div>
+
                 <div className="flex justify-between font-semibold text-lg pt-2 border-t border-[var(--border)] mt-2">
                   <span>Total</span>
                   <span>{currencySymbol}{Number(orderDetails.total).toFixed(2)}</span>
@@ -586,10 +583,6 @@ function CheckoutContent() {
                     <div className="flex justify-between text-sm">
                       <span className="text-neutral-600">Shipping</span>
                       <span className="font-medium">{shipping === 0 ? "Free" : `${currencySymbol}${shipping.toFixed(2)}`}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-neutral-600">Tax (8%)</span>
-                      <span className="font-medium">{currencySymbol}{tax.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-[var(--border)] pt-2 flex justify-between text-base font-semibold">
                       <span>Total</span>

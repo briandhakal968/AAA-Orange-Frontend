@@ -11,6 +11,7 @@ html, body {
 
 :root {
   --primary: #082b96;
+  --primary-dark: #061f70;
   --primary-foreground: #ffffff;
   --background: #ffffff;
   --foreground: #0a0a0a;

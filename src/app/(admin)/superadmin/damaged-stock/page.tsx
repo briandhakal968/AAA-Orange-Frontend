@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { adminApi } from "@/lib/admin-api";
 
 interface Country {
@@ -230,7 +229,6 @@ export default function DamagedStockPage() {
                     </span>
                   </th>
                 ))}
-                <th rowSpan={2} className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">Action</th>
               </tr>
               <tr className="bg-slate-50">
                 {countries.flatMap((c) => [
@@ -242,7 +240,7 @@ export default function DamagedStockPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={4 + countries.length * 2} className="py-12 text-center text-slate-500">
+                  <td colSpan={3 + countries.length * 2} className="py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                       Loading damaged stock...
@@ -251,14 +249,12 @@ export default function DamagedStockPage() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4 + countries.length * 2} className="py-12 text-center text-slate-500">
+                  <td colSpan={3 + countries.length * 2} className="py-12 text-center text-slate-500">
                     No damaged stock records found
                   </td>
                 </tr>
               ) : (
                 filtered.map((r) => {
-                  const totalDmg = r.stats.reduce((s, x) => s + x.damaged, 0);
-                  const highDamage = totalDmg >= 5;
                   return (
                     <tr key={r.product.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-4 px-6">
@@ -291,14 +287,6 @@ export default function DamagedStockPage() {
                           </td>
                         );
                       })}
-                      <td className="py-4 px-6 text-right">
-                        <Link
-                          href={`/superadmin/products/edit/${r.product.slug || r.product.id}`}
-                          className="text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-                        >
-                          Fix
-                        </Link>
-                      </td>
                     </tr>
                   );
                 })

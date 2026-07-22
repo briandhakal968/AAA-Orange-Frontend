@@ -123,12 +123,10 @@ export default function AccountPage() {
     const savedProfile = localStorage.getItem(`profile_picture_${userId}`);
     
     if (savedShipping) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShippingAddresses(JSON.parse(savedShipping));
     }
     if (savedAccount) {
       const account = JSON.parse(savedAccount);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAccountForm(account);
     } else {
       // Initialize with user data if no saved account info
@@ -139,23 +137,19 @@ export default function AccountPage() {
       });
     }
     if (savedProfile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewImage(savedProfile);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfilePicture(savedProfile);
     }
   }, [authUser]);
 
   useEffect(() => {
     if (authUser?.name) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayName(authUser.name);
     } else {
       const storedUser = localStorage.getItem("auth_user");
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setDisplayName(parsedUser.name || "Customer");
         } catch {
           setDisplayName("Customer");
@@ -188,7 +182,6 @@ export default function AccountPage() {
     setOrdersLoading(true);
     try {
       const data = await api.get<Order[]>("/orders");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrders(data);
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -197,7 +190,6 @@ export default function AccountPage() {
         router.push('/login');
       }
     } finally {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrdersLoading(false);
     }
   };

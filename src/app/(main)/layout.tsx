@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Providers } from "@/components/providers";
-import { CountryProvider } from "@/context/country-context";
 import { CountrySelector } from "@/components/country-selector";
 import { AlertProvider } from "@/components/ui/alert-modal";
 import { GlobalColorsProvider } from "@/components/providers/global-colors-provider";
@@ -28,18 +27,16 @@ export const metadata: Metadata = {
 function Chrome({ children }: { children: React.ReactNode }) {
   return (
     <AlertProvider>
-      <CountryProvider>
-        <GlobalColorsProvider>
-          <Navbar />
-          <main className="flex-1 pb-[30px]">
-            <div>
-              {children}
-            </div>
-          </main>
-          <Footer />
-          <CountrySelector />
-        </GlobalColorsProvider>
-      </CountryProvider>
+      <GlobalColorsProvider>
+        <Navbar />
+        <main className="flex-1 pb-[30px]">
+          <div>
+            {children}
+          </div>
+        </main>
+        <Footer />
+        <CountrySelector />
+      </GlobalColorsProvider>
     </AlertProvider>
   );
 }
@@ -51,17 +48,17 @@ export default function MainLayout({
 }>) {
   return (
     <div className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <Providers>
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        }>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
+        <Providers>
           <Chrome>
             {children}
           </Chrome>
-        </Suspense>
-      </Providers>
+        </Providers>
+      </Suspense>
     </div>
   );
 }

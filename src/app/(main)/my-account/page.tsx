@@ -39,16 +39,20 @@ interface Order {
 }
 
 interface Address {
-  id: string;
-  firstName: string;
-  lastName: string;
+  id: number | string;
+  label?: string | null;
+  first_name?: string;
+  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   address1: string;
-  address2: string;
+  address2?: string | null;
   city: string;
   state: string;
   zip: string;
   country: string;
   phone: string;
+  is_default?: boolean;
 }
 
 const sidebarLinks = [
@@ -59,8 +63,9 @@ const sidebarLinks = [
   { id: "change-password", label: "Change Password", href: "/my-account/password" },
 ];
 
-const initialAddress = {
+const initialAddress: Address = {
   id: "",
+  label: "",
   firstName: "",
   lastName: "",
   address1: "",
@@ -70,6 +75,7 @@ const initialAddress = {
   zip: "",
   country: "",
   phone: "",
+  is_default: false,
 };
 
 export default function AccountPage() {
@@ -117,19 +123,47 @@ export default function AccountPage() {
   useEffect(() => {
     if (!authUser?.id) return;
     
+    const fetchShipping = async () => {
+      const token = localStorage.getItem("auth_token");
+      try {
+        const res = await fetch("/api/shipping-addresses", {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = (await res.json()) as Address[];
+        const normalized = (data || []).map((a) => ({
+          id: a.id,
+          label: a.label ?? "",
+          firstName: a.first_name ?? a.firstName ?? "",
+          lastName: a.last_name ?? a.lastName ?? "",
+          address1: a.address1 ?? "",
+          address2: a.address2 ?? "",
+          city: a.city ?? "",
+          state: a.state ?? "",
+          zip: a.zip ?? "",
+          country: a.country ?? "",
+          phone: a.phone ?? "",
+          is_default: a.is_default ?? false,
+        }));
+        setShippingAddresses(normalized);
+      } catch (err) {
+        console.error("Error fetching shipping addresses:", err);
+      }
+    };
+    fetchShipping();
+
     const userId = authUser.id;
-    const savedShipping = localStorage.getItem(`shipping_addresses_${userId}`);
     const savedAccount = localStorage.getItem(`account_info_${userId}`);
     const savedProfile = localStorage.getItem(`profile_picture_${userId}`);
     
-    if (savedShipping) {
-      setShippingAddresses(JSON.parse(savedShipping));
-    }
     if (savedAccount) {
       const account = JSON.parse(savedAccount);
       setAccountForm(account);
     } else {
-      // Initialize with user data if no saved account info
       setAccountForm({
         name: authUser.name || '',
         email: authUser.email || '',
@@ -271,26 +305,83 @@ export default function AccountPage() {
     router.push("/");
   };
 
-  const handleShippingSubmit = (e: React.FormEvent) => {
+  const handleShippingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authUser?.id) return;
-    
-    const newAddress = { ...shippingForm, id: Date.now().toString() };
-    const updated = [...shippingAddresses, newAddress];
-    setShippingAddresses(updated);
-    localStorage.setItem(`shipping_addresses_${authUser.id}`, JSON.stringify(updated));
-    setShippingForm(initialAddress);
-    setShowShippingForm(false);
-    setSavedMessage("Shipping address saved successfully!");
-    setTimeout(() => setSavedMessage(""), 3000);
+
+    const isEditing = !!shippingForm.id;
+    const payload = {
+      label: shippingForm.label || null,
+      first_name: shippingForm.firstName,
+      last_name: shippingForm.lastName,
+      address1: shippingForm.address1,
+      address2: shippingForm.address2 || null,
+      city: shippingForm.city,
+      state: shippingForm.state,
+      zip: shippingForm.zip,
+      country: shippingForm.country,
+      phone: shippingForm.phone,
+    };
+
+    const token = localStorage.getItem("auth_token");
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    try {
+      const url = isEditing ? `/api/shipping-addresses/${shippingForm.id}` : "/api/shipping-addresses";
+      const res = await fetch(url, {
+        method: isEditing ? "PUT" : "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Failed to save");
+      }
+      const saved = (await res.json()) as Address;
+      const normalized: Address = {
+        id: saved.id,
+        label: saved.label ?? "",
+        firstName: saved.first_name ?? saved.firstName ?? "",
+        lastName: saved.last_name ?? saved.lastName ?? "",
+        address1: saved.address1 ?? "",
+        address2: saved.address2 ?? "",
+        city: saved.city ?? "",
+        state: saved.state ?? "",
+        zip: saved.zip ?? "",
+        country: saved.country ?? "",
+        phone: saved.phone ?? "",
+        is_default: saved.is_default ?? false,
+      };
+      if (isEditing) {
+        setShippingAddresses(shippingAddresses.map((a) => (String(a.id) === String(saved.id) ? normalized : a)));
+      } else {
+        setShippingAddresses([normalized, ...shippingAddresses]);
+      }
+      setShippingForm(initialAddress);
+      setShowShippingForm(false);
+      setSavedMessage(isEditing ? "Shipping address updated successfully!" : "Shipping address saved successfully!");
+      setTimeout(() => setSavedMessage(""), 3000);
+    } catch (err) {
+      showAlert(err instanceof Error ? err.message : "Failed to save shipping address", "error");
+    }
   };
 
-  const deleteShippingAddress = (id: string) => {
+  const deleteShippingAddress = async (id: string | number) => {
     if (!authUser?.id) return;
-    
-    const updated = shippingAddresses.filter((a) => a.id !== id);
-    setShippingAddresses(updated);
-    localStorage.setItem(`shipping_addresses_${authUser.id}`, JSON.stringify(updated));
+    const token = localStorage.getItem("auth_token");
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    try {
+      const res = await fetch(`/api/shipping-addresses/${id}`, { method: "DELETE", headers });
+      if (!res.ok) throw new Error("Failed to delete");
+      setShippingAddresses(shippingAddresses.filter((a) => String(a.id) !== String(id)));
+    } catch (err) {
+      showAlert(err instanceof Error ? err.message : "Failed to delete shipping address", "error");
+    }
   };
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -757,7 +848,7 @@ export default function AccountPage() {
                 <div>
                   <input
                     type="text"
-                    value={shippingForm.address2}
+                    value={shippingForm.address2 ?? ""}
                     onChange={(e) => setShippingForm({ ...shippingForm, address2: e.target.value })}
                     className="w-full h-10 px-3 border border-neutral-200 focus:border-black focus:outline-none text-sm"
                     placeholder="Apartment, suite, etc. (optional)"

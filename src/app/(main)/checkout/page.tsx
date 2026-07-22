@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth-context";
 import { useCountry } from "@/context/country-context";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 type PaymentMethod = "cod" | "card" | "paypal";
 
@@ -64,18 +65,22 @@ function CheckoutContent() {
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express" | "overnight">("standard");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
 
-  // Saved addresses from localStorage
+  // Saved addresses from server
   interface SavedAddress {
-    id: string;
-    firstName: string;
-    lastName: string;
+    id: number | string;
+    label?: string | null;
+    first_name?: string;
+    last_name?: string;
+    firstName?: string;
+    lastName?: string;
     address1: string;
-    address2: string;
+    address2?: string | null;
     city: string;
     state: string;
     zip: string;
     country: string;
     phone: string;
+    is_default?: boolean;
   }
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
@@ -94,31 +99,46 @@ function CheckoutContent() {
     setMounted(true);
   }, []);
 
-  // Load saved addresses when logged in
+  // Load saved addresses from server when logged in
   useEffect(() => {
-    if (isLoggedIn && user) {
-      try {
-        const savedAddressesRaw = localStorage.getItem(`shipping_addresses_${user.id}`);
-        if (savedAddressesRaw) {
-          const addresses: SavedAddress[] = JSON.parse(savedAddressesRaw);
-          setSavedAddresses(addresses);
-          if (addresses.length > 0) {
-            const first = addresses[0];
-            setSelectedAddressId(first.id);
-            setFormData({
-              firstName: first.firstName,
-              lastName: first.lastName,
-              address: first.address1,
-              apartment: first.address2,
-              city: first.city,
-              postalCode: first.zip,
-              phone: first.phone,
-            });
-          }
-        }
-      } catch {}
+    if (!isLoggedIn) {
+      setSavedAddresses([]);
+      return;
     }
-  }, [isLoggedIn, user]);
+    let cancelled = false;
+    (async () => {
+      const token = localStorage.getItem("auth_token");
+      try {
+        const res = await fetch("/api/shipping-addresses", {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch addresses");
+        const data = (await res.json()) as SavedAddress[];
+        if (cancelled) return;
+        setSavedAddresses(data || []);
+        if (data && data.length > 0) {
+          const def = data.find((a) => a.is_default) || data[0];
+          setSelectedAddressId(String(def.id));
+          setFormData({
+            firstName: def.first_name ?? def.firstName ?? "",
+            lastName: def.last_name ?? def.lastName ?? "",
+            address: def.address1 ?? "",
+            apartment: def.address2 ?? "",
+            city: def.city ?? "",
+            postalCode: def.zip ?? "",
+            phone: def.phone ?? "",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading shipping addresses:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
 
   const downloadInvoice = async () => {
     if (!orderNumber) return;
@@ -424,17 +444,17 @@ function CheckoutContent() {
                       <select
                         value={selectedAddressId}
                         onChange={(e) => {
-                          const addr = savedAddresses.find(a => a.id === e.target.value);
+                          const addr = savedAddresses.find(a => String(a.id) === e.target.value);
                           if (addr) {
-                            setSelectedAddressId(addr.id);
+                            setSelectedAddressId(String(addr.id));
                             setFormData({
-                              firstName: addr.firstName,
-                              lastName: addr.lastName,
-                              address: addr.address1,
-                              apartment: addr.address2,
-                              city: addr.city,
-                              postalCode: addr.zip,
-                              phone: addr.phone,
+                              firstName: addr.first_name ?? addr.firstName ?? "",
+                              lastName: addr.last_name ?? addr.lastName ?? "",
+                              address: addr.address1 ?? "",
+                              apartment: addr.address2 ?? "",
+                              city: addr.city ?? "",
+                              postalCode: addr.zip ?? "",
+                              phone: addr.phone ?? "",
                             });
                           } else {
                             setSelectedAddressId("");

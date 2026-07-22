@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useWishlist } from "@/context/wishlist-context";
 import { useAuth } from "@/context/auth-context";
+import { useCountry } from "@/context/country-context";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +13,7 @@ export default function WishlistPage() {
   const router = useRouter();
   const { wishlist, loading, removeFromWishlist } = useWishlist();
   const { isLoggedIn, loading: authLoading } = useAuth();
+  const { selectedCountry } = useCountry();
 
   const handleRemove = async (productId: number) => {
     if (confirm("Remove this item from your wishlist?")) {
@@ -104,7 +106,10 @@ export default function WishlistPage() {
                           </h3>
                         </Link>
                         <p className="text-sm font-semibold text-neutral-800 mt-1">
-                          ${Number(product.price).toFixed(2)}
+                          {selectedCountry?.currency_symbol || ''}{(() => {
+                            const cp = product.prices?.find((p: any) => p.country_id === selectedCountry?.id);
+                            return Number(cp?.price ?? product.price ?? 0).toFixed(2);
+                          })()} {selectedCountry?.currency && <span className="text-xs text-neutral-400">{selectedCountry.currency}</span>}
                         </p>
                       </div>
                       <button

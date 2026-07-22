@@ -155,9 +155,14 @@ function FeaturedProductsSection({ section }: { section: HomeSection }) {
           }}
         >
           {displayProducts.map((product: any) => {
-              const discount = product.sale_price && product.price > 0
-                ? Math.round(((product.price - Number(product.sale_price)) / product.price) * 100)
+              const countryPrice = product.prices?.find((p: any) => p.country_id === selectedCountry?.id);
+              const basePrice = Number(countryPrice?.price ?? product.price ?? 0);
+              const baseSale = countryPrice?.sale_price != null ? Number(countryPrice.sale_price) : (product.sale_price != null ? Number(product.sale_price) : null);
+              const displayPrice = baseSale ?? basePrice;
+              const discount = baseSale && basePrice > 0
+                ? Math.round(((basePrice - baseSale) / basePrice) * 100)
                 : 0;
+              const sym = selectedCountry?.currency_symbol || '';
               return (
                 <SwiperSlide key={product.id}>
                   <Link href={`/products/${product.slug}`} className="group block">
@@ -172,13 +177,13 @@ function FeaturedProductsSection({ section }: { section: HomeSection }) {
                       {product.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
-                      {product.sale_price ? (
+                      {baseSale ? (
                         <>
                           <span className="text-base font-medium text-[var(--primary)]">
-                            Rs {Number(product.sale_price).toLocaleString()}
+                            {sym}{displayPrice.toLocaleString()}
                           </span>
                           <span className="text-sm text-neutral-400 line-through">
-                            Rs {product.price.toLocaleString()}
+                            {sym}{basePrice.toLocaleString()}
                           </span>
                           {discount > 0 && (
                             <span className="text-[10px] font-medium text-white bg-[var(--primary)] px-2 py-0.5 rounded">
@@ -188,7 +193,7 @@ function FeaturedProductsSection({ section }: { section: HomeSection }) {
                         </>
                       ) : (
                         <span className="text-base font-medium text-black">
-                          Rs {product.price.toLocaleString()}
+                          {sym}{basePrice.toLocaleString()}
                         </span>
                       )}
                     </div>

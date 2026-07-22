@@ -159,10 +159,12 @@ function CheckoutContent() {
         const attrs: string[] = [];
         if (itemSize) attrs.push(`Size: ${itemSize}`);
         if (itemColor) attrs.push(`Color: ${itemColor}`);
+        const cp = item.product!.prices?.find((p: any) => p.country_id === selectedCountry?.id);
+        const unitPrice = Number(cp?.price ?? item.product!.price ?? 0);
         return {
           product_id: item.product!.id,
           name: item.product!.name,
-          price: item.product!.price,
+          price: unitPrice,
           quantity: item.quantity,
           size: itemSize,
           attributes: attrs.length > 0 ? attrs.join(', ') : undefined,

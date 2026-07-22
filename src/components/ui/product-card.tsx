@@ -18,8 +18,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const { price: rawPrice, stock } = getProductPrice(product, selectedCountry?.id);
   const price = Number(rawPrice);
-  const currencySymbol = selectedCountry?.currency_symbol || '$';
-  const currencyCode = selectedCountry?.currency || 'USD';
+  const currencySymbol = selectedCountry?.currency_symbol || '';
+  const currencyCode = selectedCountry?.currency || '';
 
   const countryPrice = product.prices?.find(
     (p) => p.country_id === selectedCountry?.id

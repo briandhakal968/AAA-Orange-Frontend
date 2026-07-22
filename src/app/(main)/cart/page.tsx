@@ -103,7 +103,10 @@ function CartContent() {
                           </p>
                         </div>
                         <p className="text-base font-light">
-                          {currencySymbol}{item.product!.price.toLocaleString()}
+                          {currencySymbol}{(() => {
+                            const cp = item.product!.prices?.find((p: any) => p.country_id === selectedCountry?.id);
+                            return Number(cp?.price ?? item.product!.price ?? 0).toLocaleString();
+                          })()}
                         </p>
                       </div>
                       <div className="flex items-center justify-between mt-4">

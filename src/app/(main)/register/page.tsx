@@ -85,13 +85,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/register`, {
+      const response = await fetch(`/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || data.error || "Registration failed");
@@ -112,13 +112,13 @@ export default function RegisterPage() {
   const sendVerificationCode = async () => {
     setCodeLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/send-verification-code`, {
+      const response = await fetch(`/api/auth/send-verification-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || data.error || "Failed to send code");
@@ -145,7 +145,7 @@ export default function RegisterPage() {
     setVerifyLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/verify-email`, {
+      const response = await fetch(`/api/auth/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, code: verificationCode }),

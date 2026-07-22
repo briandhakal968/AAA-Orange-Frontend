@@ -19,10 +19,12 @@ interface CategoryData {
 const NAV_LINKS = [
   { href: "/todays-deals", label: "Today's Deals", bold: true },
   { href: "/hot-deals", label: "Hot Deals", bold: true },
+  { href: "/shop", label: "Shop" },
+  { href: "/category/ladies-wear", label: "Ladies Wear" },
+  { href: "/category/mens-wear", label: "Mens Wear" },
   { href: "/top-selling", label: "Top Selling" },
   { href: "/new-collection", label: "New Collection" },
   { href: "/blog", label: "Blog" },
-  { href: "/wishlist", label: "Wishlist" },
 ];
 
 export function Navbar() {

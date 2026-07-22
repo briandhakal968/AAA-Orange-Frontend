@@ -34,12 +34,16 @@ interface Product {
   prices: Price[];
 }
 
-interface Row {
-  product: Product;
+interface CountryStat {
   country: Country;
   stock: number;
   damaged: number;
   sellable: number;
+}
+
+interface ProductRow {
+  product: Product;
+  stats: CountryStat[];
 }
 
 export default function DamagedStockPage() {
@@ -68,38 +72,44 @@ export default function DamagedStockPage() {
     fetchData();
   }, []);
 
-  const rows: Row[] = useMemo(() => {
-    const out: Row[] = [];
+  const rows: ProductRow[] = useMemo(() => {
+    const out: ProductRow[] = [];
     for (const p of products) {
       const perCountry = new Map<number, Price>();
       (p.prices || []).forEach((pp) => perCountry.set(pp.country_id, pp));
-      for (const c of countries) {
+      const stats: CountryStat[] = countries.map((c) => {
         const pp = perCountry.get(c.id);
         const stock = pp ? Number(pp.stock) : 0;
         const damaged = pp ? Number(pp.damaged_stock ?? 0) : 0;
-        if (stock === 0 && damaged === 0) continue;
-        out.push({
-          product: p,
+        return {
           country: c,
           stock,
           damaged,
           sellable: Math.max(0, stock - damaged),
-        });
-      }
+        };
+      });
+      out.push({ product: p, stats });
     }
-    return out.sort((a, b) => b.damaged - a.damaged);
+    return out;
   }, [products, countries]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      if (countryFilter !== "all" && String(r.country.id) !== countryFilter) return false;
-      if (damageFilter === "any") {
-        // pass
-      } else if (damageFilter === "damaged") {
-        if (r.damaged <= 0) return false;
+      const totalDamaged = r.stats.reduce((s, x) => s + x.damaged, 0);
+      const totalStock = r.stats.reduce((s, x) => s + x.stock, 0);
+
+      if (damageFilter === "damaged") {
+        if (totalDamaged <= 0) return false;
       } else if (damageFilter === "high") {
-        if (r.damaged < 5) return false;
+        if (totalDamaged < 5) return false;
       }
+
+      if (countryFilter !== "all") {
+        const cid = Number(countryFilter);
+        const s = r.stats.find((x) => x.country.id === cid);
+        if (!s || (s.stock === 0 && s.damaged === 0)) return false;
+      }
+
       if (search.trim()) {
         const q = search.toLowerCase();
         if (
@@ -109,20 +119,29 @@ export default function DamagedStockPage() {
           return false;
         }
       }
+
+      // Hide products with zero stock/damage in every country
+      if (totalStock === 0 && totalDamaged === 0) return false;
       return true;
     });
   }, [rows, countryFilter, damageFilter, search]);
 
-  const totalDamaged = rows.reduce((s, r) => s + r.damaged, 0);
-  const totalStock = rows.reduce((s, r) => s + r.stock, 0);
-  const totalProducts = new Set(rows.map((r) => r.product.id)).size;
+  const totalDamaged = rows.reduce(
+    (s, r) => s + r.stats.reduce((x, y) => x + y.damaged, 0),
+    0
+  );
+  const totalStock = rows.reduce(
+    (s, r) => s + r.stats.reduce((x, y) => x + y.stock, 0),
+    0
+  );
+  const totalProducts = rows.length;
   const damageRate = totalStock > 0 ? ((totalDamaged / totalStock) * 100).toFixed(1) : "0.0";
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Damaged Stock</h1>
-        <p className="text-sm text-slate-500 mt-1">Per-country damaged units across all products</p>
+        <p className="text-sm text-slate-500 mt-1">Per-country stock and damage across all products</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -201,20 +220,29 @@ export default function DamagedStockPage() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Product</th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase">SKU</th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Country</th>
-                <th className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Total Stock</th>
-                <th className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Damaged</th>
-                <th className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Sellable</th>
-                <th className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Damage %</th>
-                <th className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase">Action</th>
+                <th rowSpan={2} className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">Product</th>
+                <th rowSpan={2} className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">SKU</th>
+                {countries.map((c) => (
+                  <th key={c.id} colSpan={2} className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase border-l border-slate-200">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span>{c.flag}</span>
+                      <span>{c.name}</span>
+                    </span>
+                  </th>
+                ))}
+                <th rowSpan={2} className="text-right py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">Action</th>
+              </tr>
+              <tr className="bg-slate-50">
+                {countries.flatMap((c) => [
+                  <th key={`s-${c.id}`} className="text-right py-2 px-4 text-[10px] font-semibold text-slate-500 uppercase border-l border-slate-200">Stock</th>,
+                  <th key={`d-${c.id}`} className="text-right py-2 px-4 text-[10px] font-semibold text-slate-500 uppercase">Damaged</th>,
+                ])}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={4 + countries.length * 2} className="py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                       Loading damaged stock...
@@ -223,16 +251,16 @@ export default function DamagedStockPage() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={4 + countries.length * 2} className="py-12 text-center text-slate-500">
                     No damaged stock records found
                   </td>
                 </tr>
               ) : (
                 filtered.map((r) => {
-                  const pct = r.stock > 0 ? ((r.damaged / r.stock) * 100).toFixed(1) : "0.0";
-                  const highDamage = r.damaged >= 5;
+                  const totalDmg = r.stats.reduce((s, x) => s + x.damaged, 0);
+                  const highDamage = totalDmg >= 5;
                   return (
-                    <tr key={`${r.product.id}-${r.country.id}`} className="hover:bg-slate-50 transition-colors">
+                    <tr key={r.product.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <img
@@ -244,28 +272,25 @@ export default function DamagedStockPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-slate-600">{r.product.sku}</td>
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
-                          <span>{r.country.flag}</span>
-                          <span>{r.country.name}</span>
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-sm font-medium text-slate-800 text-right">{r.stock}</td>
-                      <td className="py-4 px-6 text-right">
-                        <span className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-full ${
-                          highDamage ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                        }`}>
-                          {r.damaged}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-sm font-semibold text-slate-800 text-right">{r.sellable}</td>
-                      <td className="py-4 px-6 text-right">
-                        <span className={`text-sm font-semibold ${
-                          highDamage ? "text-red-600" : r.damaged > 0 ? "text-amber-600" : "text-slate-400"
-                        }`}>
-                          {pct}%
-                        </span>
-                      </td>
+                      {r.stats.map((s) => {
+                        return (
+                          <td key={`s-${r.product.id}-${s.country.id}`} className="py-4 px-4 text-sm font-medium text-slate-800 text-right border-l border-slate-100">
+                            {s.stock}
+                          </td>
+                        );
+                      })}
+                      {r.stats.map((s) => {
+                        const dmgHigh = s.damaged >= 5;
+                        return (
+                          <td key={`d-${r.product.id}-${s.country.id}`} className="py-4 px-4 text-right border-l border-slate-100">
+                            <span className={`inline-flex px-2 py-0.5 text-xs font-bold rounded-full ${
+                              dmgHigh ? "bg-red-100 text-red-700" : s.damaged > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                            }`}>
+                              {s.damaged}
+                            </span>
+                          </td>
+                        );
+                      })}
                       <td className="py-4 px-6 text-right">
                         <Link
                           href={`/superadmin/products/edit/${r.product.slug || r.product.id}`}

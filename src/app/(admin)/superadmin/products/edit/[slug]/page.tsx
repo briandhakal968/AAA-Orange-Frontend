@@ -37,6 +37,7 @@ interface ProductPrice {
   price: number;
   sale_price: number | null;
   stock: number;
+  damaged_stock: number;
   available: boolean;
 }
 
@@ -134,6 +135,7 @@ export default function EditProductPage() {
             price: existing ? parseFloat(existing.price) : 0,
             sale_price: existing && existing.sale_price ? parseFloat(existing.sale_price) : null,
             stock: existing ? parseInt(existing.stock) : 0,
+            damaged_stock: existing ? parseInt(existing.damaged_stock ?? 0) : 0,
             available: existing ? existing.available : true,
           };
         }));
@@ -202,13 +204,13 @@ export default function EditProductPage() {
       category_ids: formData.category_ids,
       sku: formData.sku,
       minimum_stock: formData.minimum_stock,
-      damaged_stock: formData.damaged_stock,
       image: mainImageUrl,
       country_prices: countryPrices.map(cp => ({
         country_id: cp.country_id,
         price: cp.price,
         sale_price: cp.sale_price || null,
         stock: cp.stock,
+        damaged_stock: cp.damaged_stock || 0,
         available: cp.available,
       })),
       gallery: existingGallery,
@@ -362,18 +364,6 @@ attributes: Object.entries(selectedAttributes).flatMap(([attrId, values]) =>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Damaged Stock</label>
-            <input
-              type="number"
-              value={formData.damaged_stock}
-              onChange={(e) => setFormData({ ...formData, damaged_stock: parseInt(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg"
-              min="0"
-            />
-            <p className="text-xs text-slate-400 mt-2">Number of damaged units. Sellable stock = Total stock - Damaged stock</p>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
             <button
               type="button"
               onClick={() => setShowAttributes(!showAttributes)}
@@ -476,7 +466,7 @@ attributes: Object.entries(selectedAttributes).flatMap(([attrId, values]) =>
                       <span className="text-xl">{country ? country.flag : ""}</span>
                       <span className="font-medium">{country ? country.name : ""}</span>
                     </div>
-                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 ${isUnavailable ? 'pointer-events-none' : ''}`}>
+                    <div className={`flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4 ${isUnavailable ? 'pointer-events-none' : ''}`}>
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Price ({country ? country.currency_symbol : ""})</label>
                         <input
@@ -504,6 +494,16 @@ attributes: Object.entries(selectedAttributes).flatMap(([attrId, values]) =>
                           type="number"
                           value={cp.stock}
                           onChange={(e) => handleCountryPriceChange(cp.country_id, "stock", parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Damaged Stock</label>
+                        <input
+                          type="number"
+                          value={cp.damaged_stock ?? 0}
+                          onChange={(e) => handleCountryPriceChange(cp.country_id, "damaged_stock", parseInt(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
                           min="0"
                         />

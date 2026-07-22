@@ -63,6 +63,7 @@ export interface ProductPrice {
   price: number;
   sale_price?: number | null;
   stock: number;
+  damaged_stock?: number;
   available: boolean;
   country?: Country;
 }

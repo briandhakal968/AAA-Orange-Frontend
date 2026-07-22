@@ -18,6 +18,7 @@ interface Product {
 
 interface ProductWithStock extends Product {
   country_stock?: number;
+  country_damaged_stock?: number;
 }
 
 export default function CountryAdminProducts() {
@@ -29,6 +30,7 @@ export default function CountryAdminProducts() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductWithStock | null>(null);
   const [newStock, setNewStock] = useState(0);
+  const [newDamagedStock, setNewDamagedStock] = useState(0);
   const [updating, setUpdating] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -71,6 +73,7 @@ export default function CountryAdminProducts() {
   const handleEditStock = (product: ProductWithStock) => {
     setSelectedProduct(product);
     setNewStock(product.country_stock ?? product.stock);
+    setNewDamagedStock(product.country_damaged_stock ?? 0);
     setSuccess("");
     setError("");
     setShowEditModal(true);
@@ -88,7 +91,7 @@ export default function CountryAdminProducts() {
       const response = await countryAdminFetch(`/country-admin/products/${selectedProduct.id}/stock`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock: newStock }),
+        body: JSON.stringify({ stock: newStock, damaged_stock: newDamagedStock }),
       });
 
       if (!response) {
@@ -97,14 +100,17 @@ export default function CountryAdminProducts() {
       }
 
       if (response.ok) {
-        setProducts(products.map(p => 
-          p.id === selectedProduct.id ? { ...p, country_stock: newStock } : p
+        const data = await response.json();
+        setProducts(products.map(p =>
+          p.id === selectedProduct.id
+            ? { ...p, country_stock: data.stock, country_damaged_stock: data.damaged_stock }
+            : p
         ));
         setSuccess("Stock updated successfully!");
         setTimeout(() => setShowEditModal(false), 1500);
       } else {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update stock");
+        const err = await response.json();
+        throw new Error(err.error || "Failed to update stock");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update stock");
@@ -113,13 +119,17 @@ export default function CountryAdminProducts() {
     }
   };
 
+  const getSellableStock = (product: ProductWithStock) =>
+    Math.max(0, getStockValue(product) - (product.country_damaged_stock ?? 0));
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || 
-      (statusFilter === "in_stock" && (product.country_stock ?? product.stock) > 0) ||
-      (statusFilter === "low_stock" && (product.country_stock ?? product.stock) > 0 && (product.country_stock ?? product.stock) <= (product.minimum_stock ?? 5)) ||
-      (statusFilter === "out_of_stock" && (product.country_stock ?? product.stock) === 0);
+    const sellable = getSellableStock(product);
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "in_stock" && sellable > 0) ||
+      (statusFilter === "low_stock" && sellable > 0 && sellable <= (product.minimum_stock ?? 5)) ||
+      (statusFilter === "out_of_stock" && sellable === 0);
     return matchesSearch && matchesStatus;
   });
 
@@ -267,8 +277,15 @@ export default function CountryAdminProducts() {
                       </td>
                       <td className="py-4 px-6 text-sm text-slate-600">{product.sku}</td>
                       <td className="py-4 px-6 text-sm text-slate-600">{product.category?.name || "-"}</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-slate-800">{user?.country?.currency_symbol || '$'}{product.price}</td>
-                      <td className="py-4 px-6 text-sm font-medium text-slate-800">{stock}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-slate-800">{user?.country?.currency_symbol || ''}{product.price}</td>
+                      <td className="py-4 px-6 text-sm font-medium text-slate-800">
+                        <div>{Math.max(0, stock - (product.country_damaged_stock ?? 0))}</div>
+                        {(product.country_damaged_stock ?? 0) > 0 && (
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            {stock} total · {product.country_damaged_stock} damaged
+                          </div>
+                        )}
+                      </td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${stockStatus.color}`}>
                           {stockStatus.label}
@@ -366,7 +383,7 @@ export default function CountryAdminProducts() {
 
             <form onSubmit={handleUpdateStock} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Stock Quantity</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Total Stock</label>
                 <input
                   type="number"
                   value={newStock}
@@ -374,6 +391,21 @@ export default function CountryAdminProducts() {
                   min="0"
                   className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Damaged Stock</label>
+                <input
+                  type="number"
+                  value={newDamagedStock}
+                  onChange={(e) => setNewDamagedStock(parseInt(e.target.value) || 0)}
+                  min="0"
+                  max={newStock}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:border-indigo-500 focus:outline-none"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Sellable stock: {Math.max(0, newStock - newDamagedStock)}
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

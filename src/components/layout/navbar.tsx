@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createPortal } from "react-dom";
 import { CartDrawer } from "./cart-drawer";
 import { useCart } from "@/context/cart-context";
 import { useAuth } from "@/context/auth-context";
@@ -17,6 +16,15 @@ interface CategoryData {
   subcategories?: CategoryData[];
 }
 
+const NAV_LINKS = [
+  { href: "/todays-deals", label: "Today's Deals", bold: true },
+  { href: "/hot-deals", label: "Hot Deals", bold: true },
+  { href: "/top-selling", label: "Top Selling" },
+  { href: "/new-collection", label: "New Collection" },
+  { href: "/blog", label: "Blog" },
+  { href: "/wishlist", label: "Wishlist" },
+];
+
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLowerNav, setShowLowerNav] = useState(true);
@@ -29,35 +37,12 @@ export function Navbar() {
   const [allCategories, setAllCategories] = useState<CategoryData[]>([]);
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<number | null>(null);
-  const [headerMenu, setHeaderMenu] = useState<any[]>([]);
-  const [hoveredMenu, setHoveredMenu] = useState<number | null>(null);
-  const menuRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleMenuEnter = (id: number) => {
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    setHoveredMenu(id);
-  };
-
-  const handleMenuLeave = () => {
-    hideTimeoutRef.current = setTimeout(() => {
-      setHoveredMenu(null);
-    }, 300);
-  };
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = () => setHoveredMenu(null);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
   const desktopSearchRef = useRef<HTMLInputElement>(null);
   const { itemCount, isOpen, setIsOpen } = useCart();
   const { isLoggedIn, user } = useAuth();
@@ -65,7 +50,7 @@ export function Navbar() {
 
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
-      const filtered = products.filter(p => 
+      const filtered = products.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,16 +60,6 @@ export function Navbar() {
       setSearchResults([]);
     }
   }, [searchQuery, products]);
-
-  useEffect(() => {
-    return () => {
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -107,55 +82,6 @@ export function Navbar() {
       }
     };
     fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchHeaderMenu = async () => {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const res = await fetch(`${API_URL}/api/menus?location=header`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setHeaderMenu(data);
-        }
-      } catch (err) {
-        console.error("Error fetching header menu:", err);
-      }
-    };
-    fetchHeaderMenu();
-  }, []);
-
-  const renderSubmenuDropdown = useCallback((item: any) => {
-    if (!item.children || item.children.length === 0) return null;
-    const ref = menuRefs.current.get(item.id);
-    if (!ref) return null;
-    const rect = ref.getBoundingClientRect();
-    return createPortal(
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className="bg-white shadow-lg border-t border-[var(--border)] z-[100] min-w-[200px]"
-        style={{ position: 'fixed', top: '108px', left: rect.left, width: 'auto' }}
-        onMouseEnter={() => handleMenuEnter(item.id)}
-        onMouseLeave={handleMenuLeave}
-      >
-        {item.children.map((child: any, index: number) => (
-          <div key={child.id}>
-            {index > 0 && <div className="h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent mx-4" />}
-            <Link
-              href={child.url}
-              onClick={() => setHoveredMenu(null)}
-              className="block px-5 py-2.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
-            >
-              {child.label}
-            </Link>
-          </div>
-        ))}
-      </motion.div>,
-      document.body
-    );
   }, []);
 
   useEffect(() => {
@@ -341,46 +267,15 @@ export function Navbar() {
               </button>
             </div>
 
-            {headerMenu.length > 0 ? (
-              headerMenu.map((item) => (
-                <div
-                  key={item.id}
-                  ref={(el) => { if (el) menuRefs.current.set(item.id, el); }}
-                  onMouseEnter={() => handleMenuEnter(item.id)}
-                  onMouseLeave={handleMenuLeave}
-                >
-                  <Link href={item.url} className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm font-normal whitespace-nowrap flex items-center gap-1">
-                    {item.label}
-                    {item.children && item.children.length > 0 && (
-                      <svg className={`w-3 h-3 transition-transform ${hoveredMenu === item.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    )}
-                  </Link>
-                </div>
-              ))
-            ) : (
-              <>
-                <Link href="/todays-deals" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm font-bold whitespace-nowrap">
-                  Today's Deals
-                </Link>
-                <Link href="/hot-deals" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm font-bold whitespace-nowrap">
-                  Hot Deals
-                </Link>
-                <Link href="/top-selling" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap">
-                  Top Selling
-                </Link>
-                <Link href="/new-collection" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap">
-                  New Collection
-                </Link>
-                <Link href="/blog" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap">
-                  Blog
-                </Link>
-                <Link href="/wishlist" className="px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap">
-                  Wishlist
-                </Link>
-              </>
-            )}
+            {NAV_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap ${item.bold ? "font-bold" : ""}`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>
@@ -506,44 +401,15 @@ export function Navbar() {
       {/* Part 3: Sliding horizontal menu */}
       <div className={`md:hidden fixed top-[104px] left-0 right-0 z-40 bg-white border-b border-[var(--border)] transition-transform duration-300 ${showLowerNav ? "translate-y-0" : "-translate-y-full"}`}>
         <div className="flex items-center h-11 gap-0 overflow-x-auto scrollbar-hide px-3">
-          {headerMenu.length > 0 ? (
-            headerMenu.map((item) => (
-              <div
-                key={item.id}
-                ref={(el) => { if (el) menuRefs.current.set(item.id, el); }}
-                onMouseEnter={() => handleMenuEnter(item.id)}
-                onMouseLeave={handleMenuLeave}
-                className="shrink-0"
-              >
-                <Link href={item.url} className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap flex items-center gap-1 hover:text-[var(--primary)] transition-colors">
-                  {item.label}
-                  {item.children && item.children.length > 0 && (
-                    <svg className={`w-3 h-3 transition-transform ${hoveredMenu === item.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
-                </Link>
-              </div>
-            ))
-          ) : (
-            <>
-<Link href="/todays-deals" className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0">
-              Today's Deals
+          {NAV_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`px-3 py-2 text-sm text-[var(--foreground)] whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0 ${item.bold ? "font-bold" : "font-normal"}`}
+            >
+              {item.label}
             </Link>
-            <Link href="/hot-deals" className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0">
-              Hot Deals
-            </Link>
-            <Link href="/top-selling" className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0">
-              Top Selling
-            </Link>
-            <Link href="/new-collection" className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0">
-              New Collection
-            </Link>
-            <Link href="/wishlist" className="px-3 py-2 text-sm text-[var(--foreground)] font-normal whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0">
-                Wishlist
-              </Link>
-            </>
-          )}
+          ))}
         </div>
       </div>
 
@@ -707,7 +573,6 @@ export function Navbar() {
       </AnimatePresence>
 
       <CartDrawer />
-      {hoveredMenu !== null && headerMenu.find(m => m.id === hoveredMenu)?.children?.length > 0 && renderSubmenuDropdown(headerMenu.find(m => m.id === hoveredMenu)!)}
     </>
   );
 }

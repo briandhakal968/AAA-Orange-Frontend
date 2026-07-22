@@ -9,6 +9,8 @@ import { Container } from "@/components/ui/container";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountry } from "@/context/country-context";
 import { useCart } from "@/context/cart-context";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
 import { Product, getProductPrice, isProductAvailableInCountry } from "@/lib/products";
 
 const categories = [
@@ -693,6 +695,8 @@ export default function ShopPage() {
 
 function ProductListCard({ product }: { product: Product }) {
   const { addItem, setIsOpen } = useCart();
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
   const { selectedCountry } = useCountry();
   const { price: rawPrice, stock } = getProductPrice(product, selectedCountry?.id);
   const price = Number(rawPrice);
@@ -702,6 +706,10 @@ function ProductListCard({ product }: { product: Product }) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
     addItem(product, "M");
     setIsOpen(true);
   };

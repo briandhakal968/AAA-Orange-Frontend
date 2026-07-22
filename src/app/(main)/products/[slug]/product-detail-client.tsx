@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/cart-context";
+import { useAuth } from "@/context/auth-context";
 import { WishlistButton } from "@/components/ui/wishlist-button";
 import { ReviewsList } from "@/components/ui/reviews-list";
 import { RichTextContent } from "@/components/ui/rich-text-content";
@@ -35,6 +36,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { addItem, setIsOpen } = useCart();
+  const { isLoggedIn } = useAuth();
   const { showAlert } = useAlert();
   const { selectedCountry } = useCountry();
   const router = useRouter();
@@ -107,6 +109,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   };
 
   const handleAddToCart = () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
     const attrKeys = Object.keys(groupedAttributes);
     if (attrKeys.length > 0 && Object.keys(selectedAttributes).length < attrKeys.length) {
       showAlert("Please select all options", "warning");
@@ -130,6 +136,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   };
 
   const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
     const attrKeys = Object.keys(groupedAttributes);
     if (attrKeys.length > 0 && Object.keys(selectedAttributes).length < attrKeys.length) {
       showAlert("Please select all options", "warning");

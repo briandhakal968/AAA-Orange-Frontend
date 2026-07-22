@@ -17,36 +17,14 @@ interface WishlistContextType {
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = "aaaorange_wishlist";
-
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { isLoggedIn, loading: authLoading } = useAuth();
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const [localWishlist, setLocalWishlist] = useState<Product[]>([]);
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    if (initialized) return;
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        setLocalWishlist(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse local wishlist:", e);
-      }
-    }
-    setInitialized(true);
-  }, [initialized]);
-
-  useEffect(() => {
-    if (initialized && !isLoggedIn) {
-      setWishlist(localWishlist);
-    }
-  }, [initialized, isLoggedIn, localWishlist]);
 
   const fetchWishlist = useCallback(async () => {
     if (!isLoggedIn) {
+      setWishlist([]);
       return;
     }
 
@@ -55,57 +33,35 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       const data = await api.get<Product[]>("/wishlist");
       setWishlist(data);
     } catch (err) {
-      // Silently handle 401 errors (unauthenticated)
       if (err instanceof Error && !err.message.includes('401')) {
         console.error("Error fetching wishlist:", err);
       }
+      setWishlist([]);
     } finally {
       setLoading(false);
     }
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!authLoading && initialized) {
+    if (!authLoading) {
       fetchWishlist();
     }
-  }, [authLoading, initialized, fetchWishlist]);
-
-  const saveLocalWishlist = (items: Product[]) => {
-    setLocalWishlist(items);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
-  };
+  }, [authLoading, fetchWishlist]);
 
   const addToWishlist = async (productId: number) => {
-    try {
-      if (isLoggedIn) {
-        await api.post("/wishlist", { product_id: productId });
-        await fetchWishlist();
-      } else {
-        const productData = await api.get<Product>(`/products/${productId}`);
-        const exists = localWishlist.some(p => p.id === productId);
-        if (!exists) {
-          const newList = [...localWishlist, productData];
-          saveLocalWishlist(newList);
-        }
-      }
-    } catch (err) {
-      console.error("Error adding to wishlist:", err);
-      throw err;
+    if (!isLoggedIn) {
+      throw new Error("Login required to add to wishlist");
     }
+    await api.post("/wishlist", { product_id: productId });
+    await fetchWishlist();
   };
 
   const removeFromWishlist = async (productId: number) => {
-    try {
-      if (isLoggedIn) {
-        await api.delete(`/wishlist/${productId}`);
-        setWishlist(prev => prev.filter(p => p.id !== productId));
-      } else {
-        saveLocalWishlist(localWishlist.filter(p => p.id !== productId));
-      }
-    } catch (err) {
-      console.error("Error removing from wishlist:", err);
-      throw err;
+    if (!isLoggedIn) {
+      throw new Error("Login required");
     }
+    await api.delete(`/wishlist/${productId}`);
+    setWishlist(prev => prev.filter(p => p.id !== productId));
   };
 
   const isInWishlist = (productId: number) => {

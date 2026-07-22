@@ -5,8 +5,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Providers } from "@/components/providers";
 import { CountryProvider } from "@/context/country-context";
-import { AuthProvider } from "@/context/auth-context";
-import { WishlistProvider } from "@/context/wishlist-context";
 import { CountrySelector } from "@/components/country-selector";
 import { AlertProvider } from "@/components/ui/alert-modal";
 import { GlobalColorsProvider } from "@/components/providers/global-colors-provider";
@@ -27,25 +25,21 @@ export const metadata: Metadata = {
   description: "Elevate your style with curated luxury pieces",
 };
 
-function CountryLayout({ children }: { children: React.ReactNode }) {
+function Chrome({ children }: { children: React.ReactNode }) {
   return (
     <AlertProvider>
-      <AuthProvider>
-        <CountryProvider>
-          <WishlistProvider>
-            <GlobalColorsProvider>
-              <Navbar />
-              <main className="flex-1 pb-[30px]">
-                <div>
-                  {children}
-                </div>
-              </main>
-              <Footer />
-              <CountrySelector />
-            </GlobalColorsProvider>
-          </WishlistProvider>
-        </CountryProvider>
-      </AuthProvider>
+      <CountryProvider>
+        <GlobalColorsProvider>
+          <Navbar />
+          <main className="flex-1 pb-[30px]">
+            <div>
+              {children}
+            </div>
+          </main>
+          <Footer />
+          <CountrySelector />
+        </GlobalColorsProvider>
+      </CountryProvider>
     </AlertProvider>
   );
 }
@@ -63,9 +57,9 @@ export default function MainLayout({
             <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
           </div>
         }>
-          <CountryLayout>
+          <Chrome>
             {children}
-          </CountryLayout>
+          </Chrome>
         </Suspense>
       </Providers>
     </div>

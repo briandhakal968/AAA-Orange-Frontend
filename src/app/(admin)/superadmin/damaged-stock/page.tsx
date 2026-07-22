@@ -222,7 +222,7 @@ export default function DamagedStockPage() {
                 <th rowSpan={2} className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">Product</th>
                 <th rowSpan={2} className="text-left py-4 px-6 text-xs font-semibold text-slate-500 uppercase align-bottom">SKU</th>
                 {countries.map((c) => (
-                  <th key={c.id} colSpan={2} className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase border-l border-slate-200">
+                  <th key={c.id} colSpan={3} className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase border-l border-slate-200">
                     <span className="inline-flex items-center gap-1.5">
                       <span>{c.flag}</span>
                       <span>{c.name}</span>
@@ -234,13 +234,14 @@ export default function DamagedStockPage() {
                 {countries.flatMap((c) => [
                   <th key={`s-${c.id}`} className="text-right py-2 px-4 text-[10px] font-semibold text-slate-500 uppercase border-l border-slate-200">Stock</th>,
                   <th key={`d-${c.id}`} className="text-right py-2 px-4 text-[10px] font-semibold text-slate-500 uppercase">Damaged</th>,
+                  <th key={`a-${c.id}`} className="text-right py-2 px-4 text-[10px] font-semibold text-slate-500 uppercase">Available</th>,
                 ])}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={3 + countries.length * 2} className="py-12 text-center text-slate-500">
+                  <td colSpan={3 + countries.length * 3} className="py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                       Loading damaged stock...
@@ -249,7 +250,7 @@ export default function DamagedStockPage() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={3 + countries.length * 2} className="py-12 text-center text-slate-500">
+                  <td colSpan={3 + countries.length * 3} className="py-12 text-center text-slate-500">
                     No damaged stock records found
                   </td>
                 </tr>
@@ -270,7 +271,7 @@ export default function DamagedStockPage() {
                       <td className="py-4 px-6 text-sm text-slate-600">{r.product.sku}</td>
                       {r.stats.map((s) => {
                         return (
-                          <td key={`s-${r.product.id}-${s.country.id}`} className="py-4 px-4 text-sm font-medium text-slate-800 text-right border-l border-slate-100">
+                          <td key={`s-${r.product.id}-${s.country.id}`} className="py-4 px-4 text-sm font-semibold text-slate-800 text-right border-l border-slate-100">
                             {s.stock}
                           </td>
                         );
@@ -283,6 +284,17 @@ export default function DamagedStockPage() {
                               dmgHigh ? "bg-red-100 text-red-700" : s.damaged > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
                             }`}>
                               {s.damaged}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      {r.stats.map((s) => {
+                        const avail = s.sellable;
+                        const outOfStock = avail === 0 && s.stock > 0;
+                        return (
+                          <td key={`a-${r.product.id}-${s.country.id}`} className="py-4 px-4 text-sm font-semibold text-right border-l border-slate-100">
+                            <span className={outOfStock ? "text-red-600" : avail === 0 && s.stock === 0 ? "text-slate-400" : "text-emerald-600"}>
+                              {avail}
                             </span>
                           </td>
                         );

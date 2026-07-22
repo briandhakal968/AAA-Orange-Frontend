@@ -40,7 +40,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const { showAlert } = useAlert();
   const { selectedCountry } = useCountry();
   const router = useRouter();
-  const currencySymbol = selectedCountry?.currency_symbol || '$';
+  const currencySymbol = selectedCountry?.currency_symbol || '';
 
   const productAttributes = (product?.attributes as ProductAttribute[]) || [];
   const groupedAttributes: Record<string, ProductAttribute[]> = {};
@@ -90,9 +90,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const countryPrice = product?.prices?.find(
     (p) => p.country_id === selectedCountry?.id
   );
-  const displayPrice = Number(countryPrice?.price ?? product?.price ?? 0);
-  const displaySalePrice = countryPrice?.sale_price ? Number(countryPrice.sale_price) : (product?.sale_price ? Number(product.sale_price) : null);
-  const displayStock = countryPrice?.stock ?? product?.stock ?? 0;
+  const displayPrice = Number(countryPrice?.price ?? 0);
+  const displaySalePrice = countryPrice?.sale_price ? Number(countryPrice.sale_price) : null;
+  const displayStock = countryPrice?.stock ?? 0;
   const discount = displaySalePrice && displayPrice > 0 ? Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100) : 0;
 
   const galleryImages = product ? ((product as any)?.gallery?.length > 0
@@ -290,26 +290,32 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   {product.name}
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
-                  {displaySalePrice && displaySalePrice < displayPrice ? (
-                    <>
-                      <p className="text-xl md:text-2xl text-[var(--primary)] font-medium">
-                        {currencySymbol}{displaySalePrice.toFixed(2)}
+                  {countryPrice ? (
+                    displaySalePrice && displaySalePrice < displayPrice ? (
+                      <>
+                        <p className="text-xl md:text-2xl text-[var(--primary)] font-medium">
+                          {currencySymbol}{displaySalePrice.toFixed(2)}
+                        </p>
+                        <p className="text-lg text-neutral-400 line-through">
+                          {currencySymbol}{displayPrice.toFixed(2)}
+                        </p>
+                        {discount > 0 && (
+                          <span className="text-xs font-medium text-white bg-[var(--primary)] px-2 py-1 rounded">
+                            {discount}% OFF
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-xl md:text-2xl text-black">
+                        {currencySymbol}{Number(displayPrice).toFixed(2)}
+                        {selectedCountry?.currency && (
+                          <span className="text-sm text-neutral-400 ml-2">{selectedCountry.currency}</span>
+                        )}
                       </p>
-                      <p className="text-lg text-neutral-400 line-through">
-                        {currencySymbol}{displayPrice.toFixed(2)}
-                      </p>
-                      {discount > 0 && (
-                        <span className="text-xs font-medium text-white bg-[var(--primary)] px-2 py-1 rounded">
-                          {discount}% OFF
-                        </span>
-                      )}
-                    </>
+                    )
                   ) : (
-                    <p className="text-xl md:text-2xl text-black">
-                      {currencySymbol}{Number(displayPrice).toFixed(2)}
-                      {selectedCountry?.currency && selectedCountry.currency !== 'USD' && (
-                        <span className="text-sm text-neutral-400 ml-2">({selectedCountry.currency})</span>
-                      )}
+                    <p className="text-sm text-neutral-500">
+                      Not available in {selectedCountry?.name || 'this region'}
                     </p>
                   )}
                 </div>

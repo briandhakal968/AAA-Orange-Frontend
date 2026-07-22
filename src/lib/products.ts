@@ -107,14 +107,17 @@ export async function getProduct(slug: string): Promise<Product> {
 
 export function getProductPrice(product: Product, countryId: number | undefined): { price: number; stock: number; available: boolean } {
   if (!countryId) {
-    return { price: product.price, stock: product.stock, available: true };
+    return { price: 0, stock: 0, available: false };
   }
 
   const countryPrice = product.prices?.find(p => p.country_id === countryId);
+  if (!countryPrice) {
+    return { price: 0, stock: 0, available: false };
+  }
   return {
-    price: countryPrice?.price || product.price,
-    stock: countryPrice?.stock || product.stock,
-    available: countryPrice?.available !== false,
+    price: countryPrice.price,
+    stock: countryPrice.stock,
+    available: countryPrice.available !== false,
   };
 }
 

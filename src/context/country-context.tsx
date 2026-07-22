@@ -24,7 +24,15 @@ const CountryContext = createContext<CountryContextType | undefined>(undefined);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export function CountryProvider({ children }: { children: ReactNode }) {
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('selected_country_obj');
+      return stored ? (JSON.parse(stored) as Country) : null;
+    } catch {
+      return null;
+    }
+  });
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -42,28 +50,28 @@ export function CountryProvider({ children }: { children: ReactNode }) {
           const countryFromUrl = data.find((c: Country) => c.name.toLowerCase() === urlCountry.toLowerCase());
           if (countryFromUrl) {
             setSelectedCountry(countryFromUrl);
+            localStorage.setItem('selected_country_obj', JSON.stringify(countryFromUrl));
             localStorage.setItem('selected_country', countryFromUrl.id.toString());
             return;
           }
         }
         
-        const savedCountryId = localStorage.getItem('selected_country');
-        if (savedCountryId) {
-          const savedCountry = data.find((c: Country) => c.id.toString() === savedCountryId);
-          if (savedCountry) {
-            setSelectedCountry(savedCountry);
+        if (selectedCountry) {
+          const stillValid = data.find((c: Country) => c.id === selectedCountry.id);
+          if (stillValid) {
             if (!searchParams.get('country')) {
               const url = new URL(window.location.href);
-              url.searchParams.set('country', savedCountry.name.toLowerCase());
+              url.searchParams.set('country', stillValid.name.toLowerCase());
               router.replace(url.pathname + url.search, { scroll: false });
             }
             return;
           }
         }
 
-        const defaultCountry = data.find((c: Country) => c.name.toLowerCase() === 'hong kong');
+        const defaultCountry = data.find((c: Country) => c.name.toLowerCase() === 'hong kong') || data[0];
         if (defaultCountry) {
           setSelectedCountry(defaultCountry);
+          localStorage.setItem('selected_country_obj', JSON.stringify(defaultCountry));
           localStorage.setItem('selected_country', defaultCountry.id.toString());
           if (!searchParams.get('country')) {
             const url = new URL(window.location.href);
@@ -79,10 +87,12 @@ export function CountryProvider({ children }: { children: ReactNode }) {
     };
     
     fetchCountries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSetSelectedCountry = (country: Country) => {
     setSelectedCountry(country);
+    localStorage.setItem('selected_country_obj', JSON.stringify(country));
     localStorage.setItem('selected_country', country.id.toString());
     
     const url = new URL(window.location.href);
@@ -92,6 +102,7 @@ export function CountryProvider({ children }: { children: ReactNode }) {
 
   const clearSelectedCountry = () => {
     setSelectedCountry(null);
+    localStorage.removeItem('selected_country_obj');
     localStorage.removeItem('selected_country');
     
     const url = new URL(window.location.href);

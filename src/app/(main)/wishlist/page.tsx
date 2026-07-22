@@ -1,19 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWishlist } from "@/context/wishlist-context";
+import { useAuth } from "@/context/auth-context";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
 export default function WishlistPage() {
+  const router = useRouter();
   const { wishlist, loading, removeFromWishlist } = useWishlist();
+  const { isLoggedIn, loading: authLoading } = useAuth();
 
   const handleRemove = async (productId: number) => {
     if (confirm("Remove this item from your wishlist?")) {
       await removeFromWishlist(productId);
     }
   };
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      router.replace("/login");
+    }
+  }, [authLoading, isLoggedIn, router]);
+
+  if (authLoading || !isLoggedIn) {
+    return (
+      <main className="flex-1">
+        <Container>
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />
+          </div>
+        </Container>
+      </main>
+    );
+  }
 
   if (loading) {
     return (

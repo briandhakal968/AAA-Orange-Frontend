@@ -126,13 +126,15 @@ export default function AdminCustomers() {
   const handleDeleteConfirm = async () => {
     if (!selectedCustomer) return;
     setDeleteLoading(true);
+    setEditError("");
 
     try {
       await adminApi.delete(`/admin/customers/${selectedCustomer.id}`);
-      fetchCustomers();
       setShowDeleteModal(false);
+      fetchCustomers();
     } catch (err) {
       console.error("Error deleting customer:", err);
+      setEditError(err instanceof Error ? err.message : "Failed to delete customer");
     } finally {
       setDeleteLoading(false);
     }

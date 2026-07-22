@@ -122,28 +122,37 @@ export function CartDrawer() {
               <>
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                   <div className="space-y-6">
-                    {items.filter(item => item.product).map((item) => (
-                      <div key={`${item.product!.id}-${item.size}`} className="flex gap-4">
+                    {items.filter(item => item.product).map((item) => {
+                      const product = item.product!;
+                      const countryPrice = product.prices?.find(
+                        (p: any) => p.country_id === selectedCountry?.id
+                      );
+                      const unitPrice = Number(countryPrice?.price ?? product.price ?? 0);
+                      return (
+                      <div key={`${product.id}-${item.size}-${selectedCountry?.id ?? 'none'}`} className="flex gap-4">
                         <div className="w-24 h-32 bg-[var(--muted)] flex-shrink-0 overflow-hidden">
                           <img
-                            src={item.product!.image}
-                            alt={item.product!.name}
+                            src={product.image}
+                            alt={product.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
                           <Link
-                            href={`/products/${item.product!.slug || item.product!.id}`}
+                            href={`/products/${product.slug || product.id}`}
                             onClick={() => setIsOpen(false)}
                             className="text-sm font-light text-black hover:opacity-50 transition-opacity line-clamp-2"
                           >
-                            {item.product!.name}
+                            {product.name}
                           </Link>
                           <p className="text-xs text-[var(--muted-foreground)] mt-1">
                             Size: {item.size}{item.selectedColor ? ` | Color: ${item.selectedColor}` : ''}
                           </p>
                           <p className="text-sm mt-2">
-                            {currencySymbol}{item.product!.price.toLocaleString()}
+                            {currencySymbol}{unitPrice.toLocaleString()}
+                            {selectedCountry?.currency && (
+                              <span className="text-xs text-neutral-400 ml-1"> {selectedCountry.currency}</span>
+                            )}
                           </p>
                           <div className="flex items-center justify-between mt-3">
                             <div className="flex items-center border border-[var(--border)]">
@@ -174,7 +183,8 @@ export function CartDrawer() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

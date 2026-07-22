@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import type { Product } from "@/lib/products";
 import { useAuth } from "./auth-context";
+import { useCountry } from "./country-context";
 
 export interface CartItem {
   product: Product | null;
@@ -30,6 +31,7 @@ const CART_STORAGE_KEY = 'aaaorange_cart';
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { isLoggedIn, loading: authLoading } = useAuth();
+  const { selectedCountry } = useCountry();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -118,7 +120,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => {
+    if (!item.product) return sum;
+    const product = item.product;
+    const countryPrice = product.prices?.find((p: any) => p.country_id === selectedCountry?.id);
+    const unitPrice = Number(countryPrice?.price ?? product.price ?? 0);
+    return sum + unitPrice * item.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider

@@ -260,7 +260,7 @@ export function Navbar() {
               {/* Browse All Categories - opens off-canvas */}
               <button
                 onClick={() => setShowCategoriesDropdown(true)}
-                className="flex items-center gap-1 px-2 pt-2 pb-0 hover:bg-[var(--muted)] rounded-sm shrink-0 text-[var(--foreground)] text-sm font-bold"
+                className="flex items-center gap-1 px-2 pt-2 pb-0 bg-[#f5f5f5] hover:bg-[var(--muted)] rounded-sm shrink-0 text-[var(--foreground)] text-sm font-bold"
               >
                 <span>Browse all categories</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +273,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm whitespace-nowrap ${item.bold ? "font-bold" : ""}`}
+                className={`px-2 pt-2 pb-0 shrink-0 text-[var(--foreground)] text-sm font-bold whitespace-nowrap`}
               >
                 {item.label}
               </Link>
@@ -407,7 +407,7 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`px-3 py-2 text-sm text-[var(--foreground)] whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0 ${item.bold ? "font-bold" : "font-normal"}`}
+              className={`px-3 py-2 text-sm text-[var(--foreground)] font-bold whitespace-nowrap hover:text-[var(--primary)] transition-colors shrink-0`}
             >
               {item.label}
             </Link>

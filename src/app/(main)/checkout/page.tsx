@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
 import { useAuth } from "@/context/auth-context";
 import { useCountry } from "@/context/country-context";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { useAlert } from "@/components/ui/alert-modal";
 
 type PaymentMethod = "cod" | "card" | "paypal";
 
@@ -29,10 +29,7 @@ export default function CheckoutPage() {
       <main className="flex-1 pt-0">
         <Container>
           <div className="py-12 md:py-20 text-center">
-            <h1 className="text-2xl md:text-3xl font-light mb-4">Your cart is empty</h1>
-            <Link href="/shop" className="inline-block px-6 py-3 bg-black text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">
-              Continue Shopping
-            </Link>
+            <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         </Container>
       </main>
@@ -48,28 +45,11 @@ function CheckoutContent() {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderDetails, setOrderDetails] = useState<any>(null);
-  const { items, removeItem, updateQuantity, subtotal, clearCart } = useCart();
-  const { login, register, verifyEmail } = useAuth();
+  const { items, subtotal, clearCart } = useCart();
+  const { user, isLoggedIn } = useAuth();
   const { selectedCountry } = useCountry();
+  const router = useRouter();
   const currencySymbol = selectedCountry?.currency_symbol || '$';
-
-  // Auth states
-  const [authLoading, setAuthLoading] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInEmail, setLoggedInEmail] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [showLogin, setShowLogin] = useState(false);
-  const [createAccount, setCreateAccount] = useState(false);
-  const [existingEmail, setExistingEmail] = useState("");
-  const [existingPassword, setExistingPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [accountName, setAccountName] = useState("");
-  const [accountEmail, setAccountEmail] = useState("");
-  const [accountPassword, setAccountPassword] = useState("");
-  const [showVerification, setShowVerification] = useState(false);
-  const [registrationData, setRegistrationData] = useState<{ email: string } | null>(null);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verifyLoading, setVerifyLoading] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -84,7 +64,22 @@ function CheckoutContent() {
   const [shippingMethod, setShippingMethod] = useState<"standard" | "express" | "overnight">("standard");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
 
-  // Calculated values
+  // Saved addresses from localStorage
+  interface SavedAddress {
+    id: string;
+    firstName: string;
+    lastName: string;
+    address1: string;
+    address2: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+    phone: string;
+  }
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+
   const shipping = useMemo(() => {
     if (shippingMethod === "standard") return subtotal >= 500 ? 0 : 15;
     if (shippingMethod === "express") return 25;
@@ -95,100 +90,45 @@ function CheckoutContent() {
   const tax = useMemo(() => subtotal * 0.08, [subtotal]);
   const total = useMemo(() => subtotal + shipping + tax, [subtotal, shipping, tax]);
 
-  // Check auth status on mount
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    const user = localStorage.getItem("auth_user");
-    if (token && user) {
-      try {
-        const userData = JSON.parse(user);
-        setIsLoggedIn(true);
-        setLoggedInEmail(userData.email || "");
-      } catch {
-        setIsLoggedIn(false);
-      }
-    }
+    setMounted(true);
   }, []);
 
-  const handleLogin = async () => {
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      await login(existingEmail, existingPassword);
-      setIsLoggedIn(true);
-      setLoggedInEmail(existingEmail);
-      setShowLogin(false);
-      setExistingEmail("");
-      setExistingPassword("");
-    } catch (err: any) {
-      setAuthError(err.message || "Login failed");
-    } finally {
-      setAuthLoading(false);
+  // Load saved addresses when logged in
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      try {
+        const savedAddressesRaw = localStorage.getItem(`shipping_addresses_${user.id}`);
+        if (savedAddressesRaw) {
+          const addresses: SavedAddress[] = JSON.parse(savedAddressesRaw);
+          setSavedAddresses(addresses);
+          if (addresses.length > 0) {
+            const first = addresses[0];
+            setSelectedAddressId(first.id);
+            setFormData({
+              firstName: first.firstName,
+              lastName: first.lastName,
+              address: first.address1,
+              apartment: first.address2,
+              city: first.city,
+              postalCode: first.zip,
+              phone: first.phone,
+            });
+          }
+        }
+      } catch {}
     }
-  };
-
-  const handleRegister = async () => {
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      const result = await register(accountName, accountEmail, accountPassword);
-      setRegistrationData({ email: accountEmail });
-      setShowVerification(true);
-      setCreateAccount(false);
-    } catch (err: any) {
-      setAuthError(err.message || "Registration failed");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const sendVerificationCode = async (email: string) => {
-    setAuthLoading(true);
-    setAuthError("");
-    try {
-      await register(accountName, email, accountPassword);
-    } catch (err: any) {
-      setAuthError(err.message || "Failed to send verification code");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleVerifyEmail = async () => {
-    setVerifyLoading(true);
-    setAuthError("");
-    try {
-      await verifyEmail(accountEmail, verificationCode);
-      setIsLoggedIn(true);
-      setLoggedInEmail(accountEmail);
-      setShowVerification(false);
-      setRegistrationData(null);
-      setVerificationCode("");
-    } catch (err: any) {
-      setAuthError(err.message || "Verification failed");
-    } finally {
-      setVerifyLoading(false);
-    }
-  };
+  }, [isLoggedIn, user]);
 
   const downloadInvoice = async () => {
     if (!orderNumber) return;
-
+    const token = localStorage.getItem("auth_token");
     try {
-      const token = localStorage.getItem("auth_token");
-      const url = token
-        ? `${API_URL}/api/user/orders/${orderNumber}/invoice`
-        : `${API_URL}/api/orders/${orderNumber}/invoice`;
-
-      const response = await fetch(url, {
+      const response = await fetch(`${API_URL}/api/user/orders/${orderNumber}/invoice`, {
         method: "GET",
         headers: token ? { "Authorization": `Bearer ${token}` } : {},
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to download invoice");
-      }
-
+      if (!response.ok) throw new Error("Failed to download invoice");
       const blob = await response.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -207,13 +147,18 @@ function CheckoutContent() {
     setLoading(true);
 
     try {
+      const token = localStorage.getItem("auth_token");
+      if (!isLoggedIn || !token) {
+        router.push("/login");
+        return;
+      }
+
       const orderItems: OrderItem[] = items.filter(item => item.product).map((item) => {
         const itemSize = item.size || "M";
         const itemColor = (item as any).selectedColor || undefined;
         const attrs: string[] = [];
         if (itemSize) attrs.push(`Size: ${itemSize}`);
         if (itemColor) attrs.push(`Color: ${itemColor}`);
-        
         return {
           product_id: item.product!.id,
           name: item.product!.name,
@@ -225,111 +170,68 @@ function CheckoutContent() {
         };
       });
 
-      const token = localStorage.getItem("auth_token");
+      const orderData = {
+        items: orderItems,
+        subtotal,
+        shipping_cost: shipping,
+        tax,
+        total,
+        shipping_method: shippingMethod,
+        payment_method: paymentMethod,
+        email: user?.email || "",
+        country_id: selectedCountry?.id || null,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        address: formData.address,
+        apartment: formData.apartment,
+        city: formData.city,
+        postal_code: formData.postalCode,
+        phone: formData.phone,
+      };
 
-      if (isLoggedIn && token) {
-        // Authenticated user - use /api/orders which auto-sets user_id
-        const orderData = {
-          items: orderItems,
-          subtotal,
-          shipping_cost: shipping,
-          tax,
-          total,
-          shipping_method: shippingMethod,
-          payment_method: paymentMethod,
-          email: loggedInEmail || formData.firstName.toLowerCase() + "@example.com",
-          country_id: selectedCountry?.id || null,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          address: formData.address,
-          apartment: formData.apartment,
-          city: formData.city,
-          postal_code: formData.postalCode,
-          phone: formData.phone,
-        };
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
 
-        const response = await fetch(`${API_URL}/api/orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(orderData),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Order API error:", response.status, errorText);
-          throw new Error(`Failed to place order: ${response.status} ${errorText}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        if (errorData?.details) {
+          alert(errorData.details.join('\n'));
+        } else {
+          throw new Error(errorData?.error || `Failed to place order`);
         }
-
-        const result = await response.json();
-        setOrderNumber(result.order_number || `ORD-${Date.now()}`);
-        // Use the order data from API response to show actual saved attributes
-        const orderDataFromAPI = result.order || orderData;
-        // Normalize numeric values (API returns strings) and map image fields
-        setOrderDetails({
-          ...orderDataFromAPI,
-          items: (orderDataFromAPI.items || orderDataFromAPI).map((item: any) => ({
-            ...item,
-            image: item.product_image || item.image || null,
-            name: item.product_name || item.name || 'Unknown Product',
-          })),
-          subtotal: Number(orderDataFromAPI.subtotal) || subtotal,
-          shipping_cost: Number(orderDataFromAPI.shipping_cost) || shipping,
-          tax: Number(orderDataFromAPI.tax) || tax,
-          total: Number(orderDataFromAPI.total) || total,
-        });
-        setOrderPlaced(true);
-        clearCart();
-      } else {
-        // Guest checkout
-        const orderData = {
-          ...formData,
-          items: orderItems,
-          subtotal,
-          shipping_cost: shipping,
-          tax,
-          total,
-          shippingMethod,
-          paymentMethod,
-          email: loggedInEmail || formData.firstName.toLowerCase() + "@example.com",
-          country_id: selectedCountry?.id || null,
-        };
-
-        const response = await fetch(`${API_URL}/api/guest-orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(orderData),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Order API error:", response.status, errorText);
-          throw new Error(`Failed to place order: ${response.status} ${errorText}`);
-        }
-
-        const result = await response.json();
-        setOrderNumber(result.order_number || `ORD-${Date.now()}`);
-        // Normalize data for guest checkout too
-        setOrderDetails({
-          ...orderData,
-          items: orderData.items.map((item: any) => ({
-            ...item,
-            product_image: item.image || item.product_image || null,
-            product_name: item.name || item.product_name || 'Unknown Product',
-            price: Number(item.price) || 0,
-          })),
-          subtotal: Number(orderData.subtotal) || subtotal,
-          shipping_cost: Number(orderData.shipping_cost) || shipping,
-          tax: Number(orderData.tax) || tax,
-          total: Number(orderData.total) || total,
-        });
-        setOrderPlaced(true);
-        clearCart();
+        return;
       }
+
+      const result = await response.json();
+      setOrderNumber(result.order_number || `ORD-${Date.now()}`);
+      const orderDataFromAPI = result.order || orderData;
+      setOrderDetails({
+        ...orderDataFromAPI,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        address: formData.address,
+        apartment: formData.apartment,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        phone: formData.phone,
+        items: (orderDataFromAPI.items || orderItems).map((item: any) => ({
+          ...item,
+          image: item.product_image || item.image || null,
+          name: item.product_name || item.name || 'Unknown Product',
+        })),
+        subtotal: Number(orderDataFromAPI.subtotal) || subtotal,
+        shipping_cost: Number(orderDataFromAPI.shipping_cost) || shipping,
+        tax: Number(orderDataFromAPI.tax) || tax,
+        total: Number(orderDataFromAPI.total) || total,
+      });
+      setOrderPlaced(true);
+      clearCart();
     } catch (error) {
       console.error("Order placement failed:", error);
       alert("Failed to place order. Please try again.");
@@ -338,18 +240,33 @@ function CheckoutContent() {
     }
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   if (!mounted) {
     return (
       <main className="flex-1 pt-0">
         <Container>
           <div className="py-12 md:py-20 text-center">
-            <h1 className="text-2xl md:text-3xl font-light mb-4">Your cart is empty</h1>
-            <Link href="/shop" className="inline-block px-6 py-3 bg-black text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">
-              Continue Shopping
+            <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        </Container>
+      </main>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <main className="flex-1 pt-0">
+        <Container>
+          <div className="py-20 md:py-32 text-center">
+            <h1 className="text-2xl md:text-3xl font-light tracking-tight mb-4">
+              Please login to checkout
+            </h1>
+            <p className="text-[var(--muted-foreground)] mb-8">
+              You need to be logged in to place an order
+            </p>
+            <Link href="/login">
+              <Button variant="primary" size="lg">
+                Login
+              </Button>
             </Link>
           </div>
         </Container>
@@ -468,8 +385,8 @@ function CheckoutContent() {
   }
 
   return (
-<main className="flex-1 pt-0">
-        <Container>
+    <main className="flex-1 pt-0">
+      <Container>
         <div className="py-8 md:py-12">
           <div className="flex items-center justify-between mb-8">
             <Link href="/cart" className="text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors flex items-center gap-2">
@@ -485,147 +402,54 @@ function CheckoutContent() {
           <form onSubmit={handleSubmit}>
             <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
               <div className="lg:col-span-2 space-y-8">
-                {!authLoading && !isLoggedIn && (
-                  <section className="mb-6">
-                    <div className="border border-[var(--border)] rounded-xl p-6 bg-white">
-                        <p className="text-sm text-[var(--foreground)] mb-2">
-                          Already have an account?{' '}
-                          <button
-                            type="button"
-                            onClick={() => { setShowLogin(!showLogin); setCreateAccount(false); }}
-                            className="text-[var(--foreground)] font-medium hover:underline"
-                          >
-                            Click here to login
-                          </button>
-                        </p>
-                        
-                        {/* Login Form - slides open below the link */}
-                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showLogin ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
-                          <div className="space-y-3 pt-2">
-                            {authError && showLogin && (
-                              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{authError}</div>
-                            )}
-                            <input type="email" value={existingEmail} onChange={(e) => setExistingEmail(e.target.value)} placeholder="Email address" required className="w-full h-12 px-4 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm" />
-                            <div className="relative">
-                              <input type={showPassword ? "text" : "password"} value={existingPassword} onChange={(e) => setExistingPassword(e.target.value)} placeholder="Password" required className="w-full h-12 px-4 pr-12 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm" />
-                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]/70 hover:text-[var(--muted-foreground)]">{showPassword ? (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>) : (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>)}</button>
-                            </div>
-                            <Button type="button" variant="primary" size="lg" className="w-full" onClick={handleLogin}>Login</Button>
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-[var(--foreground)] mb-2">
-                          Don't have an account?{' '}
-                          <button
-                            type="button"
-                            onClick={() => { setCreateAccount(!createAccount); setShowLogin(false); }}
-                            className="text-[var(--foreground)] font-medium hover:underline"
-                          >
-                            Create a new account
-                          </button>
-                        </p>
-                        
-                        {/* Create Account Form - slides open below the link */}
-                        {!showVerification && (
-                          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${createAccount ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
-                            <div className="space-y-3 pt-2">
-                              {authError && createAccount && !authError.includes('Verification code') && (
-                                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{authError}</div>
-                              )}
-                              <input type="text" value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="Full Name" required className="w-full h-12 px-4 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm" />
-                              <input type="email" value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} placeholder="Email address" required className="w-full h-12 px-4 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm" />
-                              <div className="relative">
-                                <input type={showPassword ? "text" : "password"} value={accountPassword} onChange={(e) => setAccountPassword(e.target.value)} placeholder="Password" required minLength={8} className="w-full h-12 px-4 pr-12 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm" />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]/70 hover:text-[var(--muted-foreground)]">{showPassword ? (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>) : (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>)}</button>
-                              </div>
-                              <p className="text-xs text-[var(--muted-foreground)] -mt-1">Password must be at least 8 characters</p>
-                              <Button type="button" onClick={handleRegister} disabled={authLoading || !accountName || !accountEmail || accountPassword.length < 8} className="w-full">{authLoading ? "Creating..." : "Create Account & Continue"}</Button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Email Verification Form */}
-                        {showVerification && (
-                          <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-96 opacity-100 mb-4">
-                            <div className="space-y-3 pt-2">
-                              <p className="text-sm text-[var(--foreground)]">
-                                Enter the verification code sent to <strong>{registrationData?.email}</strong>
-                              </p>
-                              <p className="text-xs text-[var(--muted-foreground)]">
-                                Check your email inbox for the 6-digit code
-                              </p>
-                              <input
-                                type="text"
-                                value={verificationCode}
-                                onChange={(e) => setVerificationCode(e.target.value)}
-                                placeholder="Enter 6-digit code"
-                                maxLength={6}
-                                className="w-full h-12 px-4 border border-[var(--border)] rounded-lg focus:border-[var(--primary)] focus:outline-none text-sm text-center text-lg tracking-widest"
-                              />
-                              <div className="flex gap-2">
-                                <Button type="button" onClick={handleVerifyEmail} disabled={verifyLoading || verificationCode.length !== 6} className="flex-1">
-                                  {verifyLoading ? "Verifying..." : "Verify & Continue"}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setShowVerification(false);
-                                    setRegistrationData(null);
-                                    setVerificationCode("");
-                                    setAuthError("");
-                                  }}
-                                  className="flex-1"
-                                >
-                                  Back
-                                </Button>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => registrationData && sendVerificationCode(registrationData.email)}
-                                className="text-sm text-[var(--muted-foreground)] underline underline-offset-4 hover:text-black"
-                              >
-                                Resend code
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                  </section>
-                )}
-
-                {isLoggedIn && loggedInEmail && (
-                  <section className="mb-6">
-                    <div className="border border-[var(--border)] rounded-xl p-4 bg-green-50 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-green-600">
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
-                        <span className="text-sm text-green-800">
-                          Logged in as <strong>{loggedInEmail}</strong>
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          localStorage.removeItem("auth_token");
-                          localStorage.removeItem("auth_user");
-                          window.dispatchEvent(new Event('storage'));
-                          setIsLoggedIn(false);
-                          setLoggedInEmail("");
-                          setAuthError("");
-                        }}
-                        className="text-sm text-green-700 hover:text-green-900 underline"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </section>
-                )}
+                <section className="mb-6">
+                  <div className="border border-[var(--border)] rounded-xl p-4 bg-green-50 flex items-center gap-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-green-600">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span className="text-sm text-green-800">
+                      Logged in as <strong>{user?.email}</strong>
+                    </span>
+                  </div>
+                </section>
 
                 <section>
                   <h2 className="text-lg font-medium mb-4">Shipping Address</h2>
+                  {savedAddresses.length > 0 && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Use a saved address</label>
+                      <select
+                        value={selectedAddressId}
+                        onChange={(e) => {
+                          const addr = savedAddresses.find(a => a.id === e.target.value);
+                          if (addr) {
+                            setSelectedAddressId(addr.id);
+                            setFormData({
+                              firstName: addr.firstName,
+                              lastName: addr.lastName,
+                              address: addr.address1,
+                              apartment: addr.address2,
+                              city: addr.city,
+                              postalCode: addr.zip,
+                              phone: addr.phone,
+                            });
+                          } else {
+                            setSelectedAddressId("");
+                            setFormData({ firstName: "", lastName: "", address: "", apartment: "", city: "", postalCode: "", phone: "" });
+                          }
+                        }}
+                        className="w-full h-12 px-4 border border-[var(--border)] focus:border-[var(--primary)] focus:outline-none text-sm rounded-lg"
+                      >
+                        <option value="">Enter a new address</option>
+                        {savedAddresses.map((addr) => (
+                          <option key={addr.id} value={addr.id}>
+                            {addr.firstName} {addr.lastName} - {addr.address1}, {addr.city}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <input type="text" name="firstName" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="First name" required className="h-12 px-4 border border-[var(--border)] focus:border-[var(--primary)] focus:outline-none text-sm" />
@@ -721,7 +545,7 @@ function CheckoutContent() {
                        <div key={index} className="flex gap-3">
                          <div className="relative w-16 h-16 bg-white rounded-lg overflow-hidden flex-shrink-0">
                            <img src={item.product!.image} alt={item.product!.name} className="w-full h-full object-cover" />
-                           <div className="absolute top-0 right-0 bg-[var(--muted)]0 text-white text-xs px-1.5 py-0.5">{item.quantity}</div>
+                           <div className="absolute top-0 right-0 bg-black text-white text-xs px-1.5 py-0.5">{item.quantity}</div>
                          </div>
                          <div className="flex-1 min-w-0">
                            <p className="text-sm font-medium line-clamp-2">{item.product!.name}</p>

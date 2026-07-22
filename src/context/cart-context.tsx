@@ -63,15 +63,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (existingIndex >= 0) {
         const updated = [...currentItems];
+        const newQty = updated[existingIndex].quantity + quantity;
+        const maxStock = product.prices?.find((p: any) => (p as any).country_id)?.stock ?? product.stock ?? Infinity;
         updated[existingIndex] = {
           ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + quantity,
+          quantity: Math.min(newQty, maxStock),
           selectedColor: selectedColor || updated[existingIndex].selectedColor,
         };
         return updated;
       }
 
-      return [...currentItems, { product, size, quantity, selectedColor }];
+      const maxStock = product.prices?.find((p: any) => (p as any).country_id)?.stock ?? product.stock ?? Infinity;
+      return [...currentItems, { product, size, quantity: Math.min(quantity, maxStock), selectedColor }];
     });
   }, []);
 

@@ -2,15 +2,41 @@
 
 import Link from "next/link";
 import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
 import { useCountry } from "@/context/country-context";
+import { useAuth } from "@/context/auth-context";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 
 function CartContent() {
   const { items, removeItem, updateQuantity, subtotal, clearCart, itemCount } = useCart();
   const { selectedCountry } = useCountry();
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
   const currencySymbol = selectedCountry?.currency_symbol || '$';
+
+  if (!isLoggedIn) {
+    return (
+      <main className="flex-1 pt-0">
+        <Container>
+          <div className="py-20 md:py-32 text-center">
+            <h1 className="text-2xl md:text-3xl font-light tracking-tight mb-4">
+              Please login to view your cart
+            </h1>
+            <p className="text-[var(--muted-foreground)] mb-8">
+              You need to be logged in to add items to your cart
+            </p>
+            <Link href="/login">
+              <Button variant="primary" size="lg">
+                Login
+              </Button>
+            </Link>
+          </div>
+        </Container>
+      </main>
+    );
+  }
 
   if (items.length === 0) {
     return (

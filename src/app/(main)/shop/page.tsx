@@ -290,7 +290,7 @@ export default function ShopPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dragging, setDragging] = useState<"min" | "max" | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const { selectedCountry } = useCountry();
   const { addItem, setIsOpen } = useCart();
   const productsPerPage = 15;
@@ -575,7 +575,11 @@ export default function ShopPage() {
                 </div>
               </div>
 
-              {viewMode === "grid" ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : viewMode === "grid" ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-3 lg:gap-4">
                   {paginatedProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
@@ -589,7 +593,7 @@ export default function ShopPage() {
                 </div>
               )}
 
-              {filteredProducts.length > 0 && totalPages > 1 && (
+              {!loading && filteredProducts.length > 0 && totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-12">
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -625,7 +629,7 @@ export default function ShopPage() {
                 </div>
               )}
 
-              {filteredProducts.length === 0 && (
+              {!loading && filteredProducts.length === 0 && (
                 <div className="text-center py-20">
                   <p className="text-neutral-500">No products found matching your criteria.</p>
                 </div>

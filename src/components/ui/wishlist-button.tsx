@@ -75,6 +75,11 @@ export function WishlistButton({ productId, size = "md", className = "", asLink 
     e.preventDefault();
     e.stopPropagation();
 
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 300);
 

@@ -33,7 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = localStorage.getItem("auth_user");
       if (token && userData) {
         try {
-          setUser(JSON.parse(userData));
+          const parsed = JSON.parse(userData);
+          if (parsed && ["admin", "super_admin", "staff", "country_admin"].includes(parsed.role)) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("auth_user");
+            setUser(null);
+          } else {
+            setUser(parsed);
+          }
         } catch {
           localStorage.removeItem("auth_user");
           setUser(null);

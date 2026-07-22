@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import type { Product } from "@/lib/products";
+import { useAuth } from "./auth-context";
 
 export interface CartItem {
   product: Product | null;
@@ -28,11 +29,19 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = 'aaaorange_cart';
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { isLoggedIn, loading: authLoading } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isLoggedIn) {
+      setItems([]);
+      try { localStorage.removeItem(CART_STORAGE_KEY); } catch {}
+      setMounted(true);
+      return;
+    }
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY);
       if (stored) {
@@ -42,17 +51,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
       console.error('Failed to load cart:', e);
     }
     setMounted(true);
-  }, []);
+  }, [isLoggedIn, authLoading]);
 
   useEffect(() => {
-    if (mounted) {
-      try {
+    if (!mounted) return;
+    if (!isLoggedIn) return;
+    try {
+      if (items.length === 0) {
+        localStorage.removeItem(CART_STORAGE_KEY);
+      } else {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-      } catch (e) {
-        console.error('Failed to save cart:', e);
       }
+    } catch (e) {
+      console.error('Failed to save cart:', e);
     }
-  }, [items, mounted]);
+  }, [items, mounted, isLoggedIn]);
 
   const addItem = useCallback((product: Product | null, size: string, quantity = 1, selectedColor?: string) => {
     if (!product) return;

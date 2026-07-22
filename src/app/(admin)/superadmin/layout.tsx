@@ -65,7 +65,6 @@ const navItems = [
   { href: "/superadmin/users", label: "Customers", icon: "users" },
   { href: "/superadmin/country-admins", label: "Country Admin", icon: "country" },
   { href: "/superadmin/staff", label: "Staff", icon: "staff" },
-  { href: "/superadmin/menus", label: "Menu", icon: "menu" },
   { href: "/superadmin/settings", label: "Settings", icon: "settings" },
 ];
 

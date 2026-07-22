@@ -6,16 +6,23 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountry } from "@/context/country-context";
 import { useCart } from "@/context/cart-context";
+import { useAuth } from "@/context/auth-context";
 
 export function CartDrawer() {
   const router = useRouter();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, itemCount } = useCart();
   const { selectedCountry } = useCountry();
-  const currencySymbol = selectedCountry?.currency_symbol || '$';
+  const { isLoggedIn, loading: authLoading } = useAuth();
+  const currencySymbol = selectedCountry?.currency_symbol || '';
 
   const handleViewCart = () => {
     setIsOpen(false);
-    router.push("/cart");
+    router.push(isLoggedIn ? "/cart" : "/login");
+  };
+
+  const handleLoginRedirect = () => {
+    setIsOpen(false);
+    router.push("/login");
   };
 
   useEffect(() => {
@@ -73,7 +80,30 @@ export function CartDrawer() {
               </div>
             </div>
 
-            {items.length === 0 ? (
+            {!authLoading && !isLoggedIn ? (
+              <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-neutral-300 mb-4">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                <p className="text-[var(--muted-foreground)] text-sm mb-2">Please login to use your cart</p>
+                <p className="text-xs text-neutral-400 mb-6">You need to be logged in to add items to your cart.</p>
+                <button
+                  onClick={handleLoginRedirect}
+                  className="block w-full h-12 text-white text-xs uppercase tracking-[0.15em] font-medium text-center leading-[48px]"
+                  style={{ backgroundColor: "var(--primary)" }}
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-full h-12 mt-2 text-xs uppercase tracking-[0.15em] font-medium underline underline-offset-4"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            ) : items.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center px-6">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-neutral-300 mb-4">
                   <circle cx="9" cy="21" r="1" />

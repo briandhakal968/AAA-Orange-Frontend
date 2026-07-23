@@ -95,7 +95,7 @@ export function TypographyStyles() {
     `;
 
     styleEl.textContent = css;
-  }, [typography, loading]);
+  }, [typography, loaded]);
 
   return null;
 }

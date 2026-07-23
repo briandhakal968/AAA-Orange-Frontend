@@ -255,7 +255,7 @@ export default async function Home() {
         <HeroSection />
       </div>
 
-      <Suspense fallback={<div className="max-w-[1600px] mx-auto px-4 md:px-6"><div className="h-10 bg-neutral-100 rounded animate-pulse mb-4" /><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square bg-neutral-100 rounded-lg animate-pulse"/>)}</div></div>}>
+      <Suspense fallback={<div className="max-w-[1280px] mx-auto px-4 md:px-6"><div className="h-10 bg-neutral-100 rounded animate-pulse mb-4" /><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{Array.from({length:8}).map((_,i)=><div key={i} className="aspect-square bg-neutral-100 rounded-lg animate-pulse"/>)}</div></div>}>
         <HomeSectionsAsync />
       </Suspense>
     </main>

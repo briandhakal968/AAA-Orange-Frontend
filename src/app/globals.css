@@ -10,8 +10,8 @@ html, body {
 }
 
 :root {
-  --primary: #082b96;
-  --primary-dark: #061f70;
+  --primary: #002D6A;
+  --primary-dark: #001E4D;
   --primary-foreground: #ffffff;
   --background: #ffffff;
   --foreground: #0a0a0a;
@@ -46,6 +46,18 @@ li {
 .rich-text-content p {
   margin-bottom: 0.75em;
 }
+
+/* Rich text typography - driven by inline CSS vars from RichTextContent */
+.rich-text-content h1 { font-size: var(--rtc-h1-size); line-height: var(--rtc-h1-lh); margin-bottom: var(--rtc-h1-mb); font-family: var(--rtc-h1-ff); color: var(--rtc-h1-color); font-weight: var(--rtc-h1-fw); }
+.rich-text-content h2 { font-size: var(--rtc-h2-size); line-height: var(--rtc-h2-lh); margin-bottom: var(--rtc-h2-mb); font-family: var(--rtc-h2-ff); color: var(--rtc-h2-color); font-weight: var(--rtc-h2-fw); }
+.rich-text-content h3 { font-size: var(--rtc-h3-size); line-height: var(--rtc-h3-lh); margin-bottom: var(--rtc-h3-mb); font-family: var(--rtc-h3-ff); color: var(--rtc-h3-color); font-weight: var(--rtc-h3-fw); }
+.rich-text-content h4 { font-size: var(--rtc-h4-size); line-height: var(--rtc-h4-lh); margin-bottom: var(--rtc-h4-mb); font-family: var(--rtc-h4-ff); color: var(--rtc-h4-color); font-weight: var(--rtc-h4-fw); }
+.rich-text-content h5 { font-size: var(--rtc-h5-size); line-height: var(--rtc-h5-lh); margin-bottom: var(--rtc-h5-mb); font-family: var(--rtc-h5-ff); color: var(--rtc-h5-color); font-weight: var(--rtc-h5-fw); }
+.rich-text-content h6 { font-size: var(--rtc-h6-size); line-height: var(--rtc-h6-lh); margin-bottom: var(--rtc-h6-mb); font-family: var(--rtc-h6-ff); color: var(--rtc-h6-color); font-weight: var(--rtc-h6-fw); }
+.rich-text-content p { font-size: var(--rtc-p-size); line-height: var(--rtc-p-lh); margin-bottom: var(--rtc-p-mb); font-family: var(--rtc-p-ff); color: var(--rtc-p-color); font-weight: var(--rtc-p-fw); }
+.rich-text-content ul, .rich-text-content ol { line-height: 0.8; padding-left: 1em; margin-bottom: 15px; }
+.rich-text-content li { line-height: 0.8; }
+.rich-text-content li p { margin-bottom: 0; }
 
 /* Remove Quill formatting */
 [data-list] {

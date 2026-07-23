@@ -249,7 +249,6 @@ function CheckoutContent() {
         })),
         subtotal: Number(orderDataFromAPI.subtotal) || subtotal,
         shipping_cost: Number(orderDataFromAPI.shipping_cost) || shipping,
-        tax: Number(orderDataFromAPI.tax) || tax,
         total: Number(orderDataFromAPI.total) || total,
       });
       setOrderPlaced(true);
@@ -379,7 +378,6 @@ function CheckoutContent() {
                   <span className="text-neutral-600">Shipping</span>
                   <span>{Number(orderDetails.shipping_cost) === 0 ? "Free" : `${currencySymbol}{Number(orderDetails.shipping_cost).toFixed(2)}`}</span>
                 </div>
-
                 <div className="flex justify-between font-semibold text-lg pt-2 border-t border-[var(--border)] mt-2">
                   <span>Total</span>
                   <span>{currencySymbol}{Number(orderDetails.total).toFixed(2)}</span>

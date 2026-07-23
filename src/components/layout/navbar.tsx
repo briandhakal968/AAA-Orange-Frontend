@@ -120,7 +120,7 @@ export function Navbar() {
     <>
       {/* ===== DESKTOP HEADER (original) ===== */}
       <header style={{ backgroundColor: 'var(--primary)' }} className="hidden md:block fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex items-center py-3 gap-2">
             {/* Left: Logo + Deliver to */}
               <div className="flex items-center gap-2 shrink-0">
@@ -254,7 +254,7 @@ export function Navbar() {
 
       {/* Desktop Sub-navigation bar */}
       <div className={`hidden md:block fixed top-[60px] left-0 right-0 z-40 bg-white border-b border-[var(--border)] transition-transform duration-300 ${showLowerNav ? "translate-y-0" : "-translate-y-full"}`}>
-        <div className="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="max-w-[1280px] mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex items-center h-12 gap-1 overflow-x-auto scrollbar-hide">
             <div className="flex items-center gap-1">
               {/* Browse All Categories - opens off-canvas */}

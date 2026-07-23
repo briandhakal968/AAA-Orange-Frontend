@@ -35,7 +35,7 @@ export function Footer() {
   
   return (
     <footer className="bg-[#03052b] text-white">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-6 pt-16 pb-0">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-6 pt-16 pb-0">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           <div className="col-span-1">
             <h4 className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 mb-6">

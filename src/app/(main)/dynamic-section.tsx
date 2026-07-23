@@ -229,7 +229,7 @@ function BannerSection({ section }: { section: HomeSection }) {
 
   return (
     <section>
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6">
         <div className={`grid grid-cols-1 ${colClass} gap-1 md:gap-3 lg:gap-4`}>
           {items.map((item) => (
             <Link
@@ -321,7 +321,7 @@ function VerticalBannerSection({ section }: { section: HomeSection }) {
 
   return (
     <section>
-      <div className="max-w-[1600px] mx-auto px-4 md:px-6">
+      <div className="max-w-[1280px] mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {items.map((item) => (
             <Link 

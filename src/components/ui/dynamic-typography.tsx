@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useTypography } from '@/hooks/use-typography';
 
 export function TypographyStyles() {
-  const { typography, loading } = useTypography();
-  
+  const { typography, loaded } = useTypography();
+
   useEffect(() => {
-    if (loading || !typography) return;
+    if (!loaded || !typography) return;
     
     const styleId = "dynamic-typography-styles";
     let styleEl = document.getElementById(styleId);

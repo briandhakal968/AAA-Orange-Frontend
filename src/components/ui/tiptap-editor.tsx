@@ -16,7 +16,7 @@ interface TiptapEditorProps {
 export function TiptapEditor({ content, onChange, placeholder = "Start writing..." }: TiptapEditorProps) {
   const [mounted, setMounted] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const { typography, loading } = useTypography();
+  const { typography, loaded } = useTypography();
 
   useEffect(() => {
     setMounted(true);
@@ -24,7 +24,7 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
 
   // Apply typography styles to editor
   useEffect(() => {
-    if (!loading && typography) {
+    if (loaded && typography) {
       const styleId = 'tiptap-typography-styles';
       let styleEl = document.getElementById(styleId);
       
@@ -47,7 +47,7 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
          .tiptap-editor li p { margin-bottom: 0; }
        `;
     }
-  }, [typography, loading]);
+  }, [typography, loaded]);
 
   const editor = useEditor({
     extensions: [

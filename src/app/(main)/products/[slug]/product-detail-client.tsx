@@ -16,6 +16,8 @@ import { isProductAvailableInCountry } from "@/lib/products";
 import type { AdditionalInfoItem } from "@/lib/products";
 import { ProductCard } from "@/components/ui/product-card";
 import type { Product } from "@/lib/products";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 
 interface ProductAttribute {
   id: number;
@@ -30,7 +32,7 @@ interface ProductAttribute {
   };
 }
 
-export default function ProductDetailClient({ initialProduct }: { initialProduct: Product }) {
+export default function ProductDetailClient({ initialProduct, initialCountry, initialTypography }: { initialProduct: Product; initialCountry?: { id: number; name: string; currency: string; currency_symbol: string; flag: string } | null; initialTypography?: Record<string, string> | null }) {
   const productSlug = initialProduct.slug;
   const [product, setProduct] = useState<Product>(initialProduct);
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,17 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const { showAlert } = useAlert();
   const { selectedCountry } = useCountry();
   const router = useRouter();
-  const currencySymbol = selectedCountry?.currency_symbol || '';
+
+  // Prefer the server-resolved country when the context hasn't loaded a
+  // country with a real id yet (context initially returns a CURRENCY_MAP
+  // entry with id: 0 that doesn't match any product price). Once the
+  // context has a real country (after the API fetch or a user switch),
+  // use that instead.
+  const effectiveCountry =
+    (selectedCountry && selectedCountry.id !== 0 ? selectedCountry : null) ||
+    initialCountry ||
+    selectedCountry;
+  const currencySymbol = effectiveCountry?.currency_symbol || '';
 
   const productAttributes = (product?.attributes as ProductAttribute[]) || [];
   const groupedAttributes: Record<string, ProductAttribute[]> = {};
@@ -62,6 +74,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const [quantity, setQuantity] = useState(1);
   const tabsRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const relatedSwiperRef = useRef<any>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const minSwipeDistance = 50;
@@ -88,7 +101,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   };
 
   const countryPrice = product?.prices?.find(
-    (p) => p.country_id === selectedCountry?.id
+    (p) => p.country_id === effectiveCountry?.id
   );
   const displayPrice = Number(countryPrice?.price ?? 0);
   const displaySalePrice = countryPrice?.sale_price ? Number(countryPrice.sale_price) : null;
@@ -200,9 +213,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   }, [product?.slug]);
 
   return (
-    <main className="flex-1">
+    <main className="flex-1 bg-[#f5f5f5]">
       <Container>
         <div className="py-8 md:py-12">
+          <div className="bg-white rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm">
           <nav className="mb-6 text-xs text-neutral-400">
             <Link href="/shop" className="hover:text-black transition-colors">
               Shop
@@ -289,8 +303,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 <h1 className="text-2xl md:text-3xl font-light tracking-tight text-black mb-4">
                   {product.name}
                 </h1>
-                <div className="flex items-center gap-3 flex-wrap">
-                  {countryPrice ? (
+                <div className="flex items-center gap-3 flex-wrap min-h-[2rem]">
+                  {!effectiveCountry ? (
+                    <div className="h-7 w-32 bg-neutral-100 rounded animate-pulse" />
+                  ) : countryPrice ? (
                     displaySalePrice && displaySalePrice < displayPrice ? (
                       <>
                         <p className="text-xl md:text-2xl text-[var(--primary)] font-medium">
@@ -308,20 +324,21 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     ) : (
                       <p className="text-xl md:text-2xl text-black">
                         {currencySymbol}{Number(displayPrice).toFixed(2)}
-                        {selectedCountry?.currency && (
-                          <span className="text-sm text-neutral-400 ml-2">{selectedCountry.currency}</span>
+                        {effectiveCountry?.currency && (
+                          <span className="text-sm text-neutral-400 ml-2">{effectiveCountry.currency}</span>
                         )}
                       </p>
                     )
                   ) : (
                     <p className="text-sm text-neutral-500">
-                      Not available in {selectedCountry?.name || 'this region'}
+                      Not available in {effectiveCountry?.name || 'this region'}
                     </p>
                   )}
                 </div>
-                <p className={`text-sm mt-2 ${displayStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {displayStock > 0 ? 'In Stock' : 'Out of Stock'}
-                  {displayStock > 0 && ` (${displayStock} available)`}
+                <p className={`text-sm mt-2 min-h-[1.25rem] ${effectiveCountry && displayStock > 0 ? 'text-green-600' : effectiveCountry ? 'text-red-600' : 'text-transparent'}`}>
+                  {effectiveCountry ? (
+                    displayStock > 0 ? `In Stock (${displayStock} available)` : 'Out of Stock'
+                  ) : '\u00A0'}
                 </p>
 
                 {(product.average_rating ?? 0) > 0 && (
@@ -361,12 +378,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </div>
 
               <div className="border-t border-neutral-200 pt-3 mb-[20px]">
-                <RichTextContent html={(() => {
-                  const desc = product.description || '';
-                  if (!desc) return '';
-                  if (/<[a-z][\s\S]*>/i.test(desc)) return desc.replace(/<ul>/g, '<ul class="list-disc pl-6">').replace(/<ol>/g, '<ol class="list-decimal pl-6">');
-                  return `<p>${desc}</p>`;
-                })()} />
+                <RichTextContent
+                  initialTypography={initialTypography}
+                  html={(() => {
+                    const desc = product.description || '';
+                    if (!desc) return '';
+                    if (/<[a-z][\s\S]*>/i.test(desc)) return desc.replace(/<ul>/g, '<ul class="list-disc pl-6">').replace(/<ol>/g, '<ol class="list-decimal pl-6">');
+                    return `<p>${desc}</p>`;
+                  })()}
+                />
               </div>
 
               {Object.entries(groupedAttributes).map(([name, attrs]) => {
@@ -415,7 +435,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               })}
 
               <div className="flex gap-3 mb-6">
-                <div className="flex items-center border border-neutral-200 rounded-[15px] overflow-hidden">
+                <div className={`flex items-center border border-neutral-200 rounded-[15px] overflow-hidden ${!effectiveCountry ? 'invisible' : ''}`}>
                   <button
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
                     className="px-3 py-2 text-sm hover:bg-neutral-100 transition-colors"
@@ -439,21 +459,21 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   onClick={handleAddToCart}
                   variant="primary"
                   size="lg"
-                  disabled={displayStock === 0}
+                  disabled={!effectiveCountry || displayStock === 0}
                   className={`flex-1 rounded-[15px] ${
                     addedToCart ? "bg-green-600 hover:bg-green-700" : ""
                   }`}
                 >
-                  {displayStock === 0 ? "Out of Stock" : addedToCart ? "Added to Cart" : "Add to Cart"}
+                  {!effectiveCountry ? "" : displayStock === 0 ? "Out of Stock" : addedToCart ? "Added to Cart" : "Add to Cart"}
                 </Button>
                 <Button
                   onClick={handleBuyNow}
                   variant="primary"
                   size="lg"
-                  disabled={displayStock === 0}
+                  disabled={!effectiveCountry || displayStock === 0}
                   className="flex-1 rounded-[15px] hover:opacity-90" style={{ backgroundColor: '#f59e0b' }}
                 >
-                  {displayStock === 0 ? "Out of Stock" : "Buy Now"}
+                  {!effectiveCountry ? "" : displayStock === 0 ? "Out of Stock" : "Buy Now"}
                 </Button>
               </div>
 
@@ -461,33 +481,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
               <div className="pb-[10px]"></div>
 
-              <div className="border-t border-neutral-200 pt-6 space-y-4 mb-8">
-                <div className="flex items-center gap-3 text-xs text-neutral-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                  Free shipping on orders over {currencySymbol}500
-                </div>
-                <div className="flex items-center gap-3 text-xs text-neutral-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
-                    <path d="M1 10h22" />
-                  </svg>
-                  30-day return policy
-                </div>
-                <div className="flex items-center gap-3 text-xs text-neutral-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  Authentic luxury products
-                </div>
-
-               </div>
               </div>
             </div>
           </div>
+          </div>
 
-        <div className="border-t border-neutral-200 pt-6 mt-8" ref={tabsRef}>
+        <div className="bg-white rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm mt-6" ref={tabsRef}>
          <div className="flex gap-6 border-b border-neutral-200 mb-6">
            {(product as any)?.long_description && (
              <button
@@ -534,7 +533,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
         {activeTab === "details" && (
           <div>
-            <div className="bg-neutral-50 rounded-lg p-5">
+            <div className="rounded-lg p-5">
               <table className="w-full">
                 <tbody>
                   {(product.additional_info || []).map((info: AdditionalInfoItem, index: number, arr: AdditionalInfoItem[]) => (
@@ -555,7 +554,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
         {activeTab === "long_description" && (
           <div>
-            <RichTextContent html={(product as any)?.long_description || ''} />
+            <RichTextContent
+              initialTypography={initialTypography}
+              html={(product as any)?.long_description || ''}
+            />
           </div>
         )}
 
@@ -567,13 +569,49 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
       {!loadingRelated && relatedProducts.length > 0 && (
         <Container>
-          <div className="mt-16 pt-8 border-t border-neutral-200">
-            <h2 className="text-xl md:text-2xl font-light mb-8">You may also like</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {relatedProducts.map((relatedProduct: Product) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
+          <div className="bg-white rounded-2xl p-4 md:p-6 lg:p-8 shadow-sm mt-6">
+            <div className="flex items-end justify-between mb-6">
+              <h2 className="text-xl md:text-2xl font-light tracking-tight text-black">
+                Related product
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => relatedSwiperRef.current?.slidePrev()}
+                  className="w-9 h-9 rounded-full border border-neutral-200 hover:border-black flex items-center justify-center transition-colors"
+                  aria-label="Previous"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => relatedSwiperRef.current?.slideNext()}
+                  className="w-9 h-9 rounded-full border border-neutral-200 hover:border-black flex items-center justify-center transition-colors"
+                  aria-label="Next"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
+            <Swiper
+              slidesPerView={2}
+              spaceBetween={12}
+              loop={relatedProducts.length > 4}
+              onSwiper={(swiper) => { relatedSwiperRef.current = swiper; }}
+              breakpoints={{
+                480: { slidesPerView: 2, spaceBetween: 12 },
+                768: { slidesPerView: 3, spaceBetween: 16 },
+                1024: { slidesPerView: 4, spaceBetween: 20 },
+              }}
+            >
+              {relatedProducts.map((relatedProduct: Product) => (
+                <SwiperSlide key={relatedProduct.id}>
+                  <ProductCard product={relatedProduct} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </Container>
       )}

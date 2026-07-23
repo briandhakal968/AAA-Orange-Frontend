@@ -26,18 +26,18 @@ export const metadata: Metadata = {
 
 function Chrome({ children }: { children: React.ReactNode }) {
   return (
-    <AlertProvider>
-      <GlobalColorsProvider>
-        <Navbar />
-        <main className="flex-1 pb-[30px]">
-          <div>
+    <div className="flex flex-col min-h-screen">
+      <AlertProvider>
+        <GlobalColorsProvider>
+          <Navbar />
+          <main className="flex-1 flex flex-col">
             {children}
-          </div>
-        </main>
-        <Footer />
-        <CountrySelector />
-      </GlobalColorsProvider>
-    </AlertProvider>
+          </main>
+          <Footer />
+          <CountrySelector />
+        </GlobalColorsProvider>
+      </AlertProvider>
+    </div>
   );
 }
 

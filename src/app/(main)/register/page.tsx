@@ -3,8 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Container } from "@/components/ui/container";
-import { Button } from "@/components/ui/button";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -31,7 +29,7 @@ export default function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    
+
     if (e.target.name === 'password') {
       calculatePasswordStrength(e.target.value);
     }
@@ -99,8 +97,7 @@ export default function RegisterPage() {
 
       setSuccess("Account created! Please verify your email.");
       setStep('verify');
-      
-      // Auto-send verification code
+
       await sendVerificationCode();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -126,8 +123,7 @@ export default function RegisterPage() {
 
       setCodeSent(true);
       setError("");
-      
-      // Show code in development (remove in production)
+
       if (data.code) {
         setSuccess(`Verification code: ${data.code} (Check console in production)`);
         console.log('🔐 Verification Code:', data.code);
@@ -157,7 +153,6 @@ export default function RegisterPage() {
         throw new Error(data.message || data.error || "Verification failed");
       }
 
-      // Auto-login with the token from verification response
       if (data.token && data.user) {
         localStorage.setItem('auth_token', data.token);
         localStorage.setItem('auth_user', JSON.stringify(data.user));
@@ -176,50 +171,117 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex-1">
-      <Container>
-        <div className="py-12 md:py-20 max-w-md mx-auto">
-          <h1 className="text-2xl md:text-3xl font-light tracking-tight text-center mb-2">
-            {step === 'register' ? 'Create Account' : 'Verify Email'}
-          </h1>
-          <p className="text-sm text-neutral-500 text-center mb-8">
-            {step === 'register' ? 'Join the AAA Orange community' : `Enter the code sent to ${formData.email}`}
-          </p>
+    <main className="flex-1 bg-gradient-to-br from-[#001E4D] via-[#002D6A] to-[#003d8a] flex items-center justify-center py-16 sm:py-24 px-4 sm:px-8 relative overflow-hidden">
+      {/* Decorative background circles */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-          {step === 'register' ? (
-            <form onSubmit={handleRegister} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm text-center">
-                  {error}
-                </div>
-              )}
+      {/* Card */}
+      <div className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 min-h-[640px]">
+        {/* Left side - Welcome panel */}
+        <div className="relative bg-gradient-to-br from-[#002D6A] to-[#003d8a] p-10 sm:p-14 text-white flex flex-col justify-between overflow-hidden">
+          <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-white/10 rounded-full" />
+          <div className="absolute -top-20 -left-20 w-60 h-60 bg-white/5 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-white/5 rounded-full" />
 
-              <div>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Full name"
-                  required
-                  className="w-full h-12 px-4 border border-neutral-200 focus:border-black focus:outline-none text-sm"
-                />
+          <div className="relative z-10">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <span className="text-base font-bold">A</span>
               </div>
+              <span className="text-lg font-semibold tracking-tight">AAA Orange</span>
+            </Link>
+          </div>
 
-              <div>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email address"
-                  required
-                  className="w-full h-12 px-4 border border-neutral-200 focus:border-black focus:outline-none text-sm"
-                />
-              </div>
+          <div className="relative z-10 space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">
+              JOIN US
+            </h1>
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-wide uppercase">
+              Create your account
+            </h2>
+            <p className="text-sm sm:text-base text-white/80 leading-relaxed max-w-xs">
+              Sign up today to unlock exclusive deals, faster checkout, and a personalized shopping experience.
+            </p>
+          </div>
 
-              <div>
+          <div className="relative z-10 flex items-center gap-6 text-xs text-white/60">
+            <div className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              Free shipping
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Secure
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Form panel */}
+        <div className="relative p-8 sm:p-12 flex flex-col justify-center">
+          <div className="absolute -bottom-16 -right-16 w-40 h-40 bg-[#002D6A]/10 rounded-full" />
+
+          <div className="relative z-10 max-w-sm mx-auto w-full">
+            <div className="mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight">
+                {step === 'register' ? 'Register' : 'Verify Email'}
+              </h2>
+              <p className="text-sm text-neutral-500 mt-2">
+                {step === 'register'
+                  ? 'Create your account in just a few steps.'
+                  : `Enter the code we sent to ${formData.email}`}
+              </p>
+            </div>
+
+            {step === 'register' ? (
+              <form onSubmit={handleRegister} className="space-y-3">
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                    {error}
+                  </div>
+                )}
+
                 <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Full name"
+                    required
+                    className="w-full h-11 pl-11 pr-4 border border-neutral-200 rounded-lg focus:border-[#002D6A] focus:ring-2 focus:ring-[#002D6A]/10 focus:outline-none text-sm transition-all bg-neutral-50/50 focus:bg-white"
+                  />
+                </div>
+
+                <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email address"
+                    required
+                    className="w-full h-11 pl-11 pr-4 border border-neutral-200 rounded-lg focus:border-[#002D6A] focus:ring-2 focus:ring-[#002D6A]/10 focus:outline-none text-sm transition-all bg-neutral-50/50 focus:bg-white"
+                  />
+                </div>
+
+                <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
@@ -227,36 +289,25 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     placeholder="Password"
                     required
-                    className="w-full h-12 px-4 pr-12 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                    className="w-full h-11 pl-11 pr-16 border border-neutral-200 rounded-lg focus:border-[#002D6A] focus:ring-2 focus:ring-[#002D6A]/10 focus:outline-none text-sm transition-all bg-neutral-50/50 focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-[#002D6A] hover:text-[#001E4D] uppercase tracking-wide"
                   >
-                    {showPassword ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    {showPassword ? "Hide" : "Show"}
                   </button>
                 </div>
-                
-                {/* Password Strength Indicator */}
+
                 {formData.password && (
-                  <div className="mt-2">
+                  <div className="pt-1">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-neutral-500">Password strength</span>
-                      <span className={`text-xs font-medium ${
+                      <span className={`text-xs font-semibold ${
                         passwordStrength < 30 ? 'text-red-500' :
-                        passwordStrength < 60 ? 'text-yellow-500' :
-                        passwordStrength < 80 ? 'text-blue-500' : 'text-green-500'
+                        passwordStrength < 60 ? 'text-yellow-600' :
+                        passwordStrength < 80 ? 'text-blue-500' : 'text-green-600'
                       }`}>
                         {getStrengthLabel()}
                       </span>
@@ -267,26 +318,14 @@ export default function RegisterPage() {
                         style={{ width: `${passwordStrength}%` }}
                       />
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                      <span className={formData.password.length >= 8 ? 'text-green-600' : 'text-neutral-400'}>
-                        8+ Characters
-                      </span>
-                      <span className={/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-neutral-400'}>
-                        Uppercase Letter
-                      </span>
-                      <span className={/[0-9]/.test(formData.password) ? 'text-green-600' : 'text-neutral-400'}>
-                        Number
-                      </span>
-                      <span className={/[^a-zA-Z0-9]/.test(formData.password) ? 'text-green-600' : 'text-neutral-400'}>
-                        Special Character
-                      </span>
-                    </div>
                   </div>
                 )}
-              </div>
 
-              <div>
                 <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
@@ -294,140 +333,109 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     placeholder="Confirm password"
                     required
-                    className="w-full h-12 px-4 pr-12 border border-neutral-200 focus:border-black focus:outline-none text-sm"
+                    className="w-full h-11 pl-11 pr-16 border border-neutral-200 rounded-lg focus:border-[#002D6A] focus:ring-2 focus:ring-[#002D6A]/10 focus:outline-none text-sm transition-all bg-neutral-50/50 focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 text-xs font-semibold text-[#002D6A] hover:text-[#001E4D] uppercase tracking-wide"
                   >
-                    {showConfirmPassword ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    {showConfirmPassword ? "Hide" : "Show"}
                   </button>
                 </div>
-                {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                  <p className="text-xs text-green-600 mt-1">✓ Passwords match</p>
-                )}
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-xs text-red-600 mt-1">○ Passwords do not match</p>
-                )}
-              </div>
 
-              <div className="pt-2">
-                <label className="flex items-start gap-2 cursor-pointer">
+                <label className="flex items-start gap-2 cursor-pointer pt-1">
                   <input
                     type="checkbox"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="w-4 h-4 mt-0.5"
+                    className="w-4 h-4 mt-0.5 rounded border-neutral-300 text-[#002D6A] focus:ring-[#002D6A] focus:ring-offset-0"
                   />
-                  <span className="text-sm text-neutral-600">
+                  <span className="text-xs text-neutral-600 leading-relaxed">
                     I agree to the{" "}
-                    <Link href="/terms" className="underline underline-offset-2">
-                      Terms and Conditions
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="underline underline-offset-2">
-                      Privacy Policy
-                    </Link>
+                    <Link href="/terms" className="text-[#002D6A] font-medium hover:underline">Terms</Link>
+                    {" "}and{" "}
+                    <Link href="/privacy" className="text-[#002D6A] font-medium hover:underline">Privacy Policy</Link>
                   </span>
                 </label>
-              </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? "Creating account..." : "Create Account"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerify} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 text-red-600 text-sm text-center">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 bg-green-50 text-green-600 text-sm text-center">
-                  {success}
-                </div>
-              )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 bg-[#001E4D] hover:bg-[#002D6A] text-white font-semibold rounded-lg transition-all shadow-lg shadow-[#002D6A]/30 disabled:opacity-60 mt-2"
+                >
+                  {loading ? "Creating account..." : "Register"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerify} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="p-3 bg-green-50 border border-green-100 text-green-600 text-sm rounded-lg">
+                    {success}
+                  </div>
+                )}
 
-              <div>
                 <input
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
+                  placeholder="000000"
                   maxLength={6}
                   pattern="[0-9]*"
                   inputMode="numeric"
                   required
-                  className="w-full h-12 px-4 border border-neutral-200 focus:border-black focus:outline-none text-sm text-center text-lg tracking-widest"
+                  className="w-full h-14 px-4 border border-neutral-200 rounded-lg focus:border-[#002D6A] focus:ring-2 focus:ring-[#002D6A]/10 focus:outline-none text-center text-2xl tracking-[0.5em] font-semibold transition-all bg-neutral-50/50 focus:bg-white"
                 />
-              </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                disabled={verifyLoading || verificationCode.length !== 6}
-              >
-                {verifyLoading ? "Verifying..." : "Verify Email"}
-              </Button>
-
-              <div className="text-center">
                 <button
-                  type="button"
-                  onClick={sendVerificationCode}
-                  disabled={codeLoading}
-                  className="text-sm text-neutral-500 underline underline-offset-4 hover:text-black disabled:opacity-50"
+                  type="submit"
+                  disabled={verifyLoading || verificationCode.length !== 6}
+                  className="w-full h-12 bg-[#001E4D] hover:bg-[#002D6A] text-white font-semibold rounded-lg transition-all shadow-lg shadow-[#002D6A]/30 disabled:opacity-60"
                 >
-                  {codeLoading ? "Sending..." : codeSent ? "Resend code" : "Send code"}
+                  {verifyLoading ? "Verifying..." : "Verify Email"}
                 </button>
-              </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setStep('register')}
-                  className="text-sm text-neutral-500 hover:text-black"
-                >
-                  ← Back to registration
-                </button>
-              </div>
-            </form>
-          )}
+                <div className="flex items-center justify-between text-sm pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setStep('register')}
+                    className="text-neutral-500 hover:text-neutral-900 transition-colors"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={sendVerificationCode}
+                    disabled={codeLoading}
+                    className="text-[#002D6A] hover:text-[#001E4D] font-medium disabled:opacity-50"
+                  >
+                    {codeLoading ? "Sending..." : codeSent ? "Resend code" : "Send code"}
+                  </button>
+                </div>
+              </form>
+            )}
 
-          {step === 'register' && (
-            <div className="mt-8 text-center">
-              <p className="text-sm text-neutral-500">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-black underline underline-offset-4 hover:opacity-50 transition-opacity"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          )}
+            {step === 'register' && (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-neutral-600">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="text-[#002D6A] font-semibold hover:underline"
+                  >
+                    Login
+                  </Link>
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </Container>
+      </div>
     </main>
   );
 }

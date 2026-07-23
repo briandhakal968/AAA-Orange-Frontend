@@ -12,10 +12,6 @@ interface Country {
   flag: string;
 }
 
-interface TypographyData {
-  h1: any; h2: any; h3: any; h4: any; h5: any; h6: any; paragraph: any;
-}
-
 interface PageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ country?: string }>;
@@ -35,7 +31,7 @@ async function getCountryFromUrl(countryName: string | undefined): Promise<Count
   }
 }
 
-async function getTypography(): Promise<TypographyData | null> {
+async function getTypography(): Promise<Record<string, string> | null> {
   try {
     const res = await fetch(`${API_URL}/api/typography`, {
       next: { revalidate: 3600 },
